@@ -23,9 +23,9 @@ import { useRestaurant } from '../context/RestaurantContext';
 
 /* ── Theme ─────────────────────────────────────────────────────── */
 const C = {
-  primary:      '#2DBE60',
-  primaryHover: '#22A455',
-  primaryLight: 'rgba(45,190,96,0.10)',
+  primary:      '#E63946',
+  primaryHover: '#C0252E',
+  primaryLight: 'rgba(230,57,70,0.10)',
   dark:         '#1F2937',
   muted:        '#6B7280',
   border:       '#E5E7EB',

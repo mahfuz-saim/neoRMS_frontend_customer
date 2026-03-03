@@ -14,13 +14,15 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Eye, EyeOff, LogIn, UserPlus, X, Utensils } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-/* ── Theme (matches existing site palette) ──────────────────────── */
+/* ── Theme (sourced from centralized theme) ────────────────────────────── */
+import { theme as appTheme } from '../../theme/colors';
+const _T = appTheme.colors;
 const C = {
-  primary:      '#2DBE60',
-  primaryHover: '#22A455',
-  dark:         '#1F2937',
-  gray:         '#6B7280',
-  border:       '#E5E7EB',
+  primary:      _T.primary,
+  primaryHover: _T.primaryHover,
+  dark:         _T.dark,
+  gray:         _T.muted,
+  border:       _T.border,
   error:        '#EF4444',
 };
 
@@ -361,12 +363,12 @@ const AuthModal = () => {
             <div style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               width: 46, height: 46, borderRadius: 12,
-              background: 'rgba(45,190,96,0.10)', marginBottom: 10,
+              background: 'rgba(230,57,70,0.10)', marginBottom: 10,
             }}>
               <Utensils size={22} color={C.primary} />
             </div>
             <h2 style={{ fontSize: 19, fontWeight: 700, color: C.dark, margin: 0 }}>
-              GreenBite
+              neoRMS
             </h2>
           </div>
 

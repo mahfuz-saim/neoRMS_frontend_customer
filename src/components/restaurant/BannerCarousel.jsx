@@ -1,30 +1,17 @@
 /* ─────────────────────────────────────────────────────────────────
    BannerCarousel
-   Full-width hero carousel used on every restaurant home page.
+   Full-viewport hero carousel used on every restaurant home page.
+   Design mirrors HeroSection: scale+fade bg transition, decorative
+   rays, floating particles, staggered text entrance animations.
 
    Props:
      restaurant    — the currentRestaurant object from context
      restaurantId  — string, used to build /menu and /about links
-
-   Behaviour:
-   • Builds a 3-slide deck: bannerImage from backend + 2 curated
-     food-photography fallbacks (so there is always something to
-     carousel through even if backend returns a single image).
-   • Auto-advances every 5 s; pauses on hover.
-   • Smooth CSS cross-fade transition (0.7 s).
-   • Prev / Next arrow buttons + dot indicators.
-   • Responsive — works on mobile and desktop.
-   • Pulls under the 80 px fixed navbar via marginTop: -80.
    ───────────────────────────────────────────────────────────────── */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, UtensilsCrossed, CalendarDays } from 'lucide-react';
-
-const C = {
-  primary:      '#2DBE60',
-  primaryHover: '#22A455',
-};
 
 /* ── Curated fallback food images ─────────────────────────────── */
 const FALLBACKS = [
@@ -35,327 +22,381 @@ const FALLBACKS = [
 
 const buildSlides = (bannerImage) => {
   const primary = bannerImage || null;
-  if (primary) {
-    // Use the restaurant image as the first slide + 2 fallbacks so carousel has substance
-    return [primary, FALLBACKS[1], FALLBACKS[2]];
-  }
+  if (primary) return [primary, FALLBACKS[1], FALLBACKS[2]];
   return FALLBACKS;
 };
 
-/* ── Slide overlay content ── */
-const SlideContent = ({ restaurant, restaurantId, isFirst }) => (
-  <div
-    style={{
-      position: 'relative', zIndex: 3,
-      textAlign: 'center',
-      padding: '0 24px',
-      maxWidth: 760,
-      margin: '0 auto',
-    }}
-  >
-    {/* Welcome badge — only on first slide */}
-    {isFirst && (
-      <span
-        style={{
-          display:       'inline-block',
-          background:    'rgba(45,190,96,0.88)',
-          color:         '#fff',
-          fontSize:      12, fontWeight: 700, letterSpacing: '1.3px',
-          textTransform: 'uppercase',
-          padding:       '5px 18px', borderRadius: 20, marginBottom: 22,
-          boxShadow:     '0 2px 10px rgba(0,0,0,0.25)',
-        }}
-      >
-        🍽️ Welcome to
-      </span>
-    )}
-
-    {/* Restaurant name */}
-    <h1
-      style={{
-        fontSize:   'clamp(30px, 6.5vw, 66px)',
-        fontWeight: 900,
-        color:      '#fff',
-        lineHeight: 1.1,
-        margin:     isFirst ? '0 0 16px' : '0 0 20px',
-        textShadow: '0 3px 16px rgba(0,0,0,0.45)',
-        letterSpacing: '-0.5px',
-      }}
-    >
-      {restaurant.name || 'Restaurant'}
-    </h1>
-
-    {/* Tagline */}
-    {restaurant.tagline && (
-      <p
-        style={{
-          fontSize:   'clamp(14px, 2.4vw, 19px)',
-          color:      'rgba(255,255,255,0.88)',
-          margin:     '0 auto 34px',
-          lineHeight: 1.65,
-          maxWidth:   560,
-          textShadow: '0 1px 8px rgba(0,0,0,0.35)',
-        }}
-      >
-        {restaurant.tagline}
-      </p>
-    )}
-
-    {/* CTA buttons */}
-    <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-      <Link
-        to={`/restaurant/${restaurantId}/menu`}
-        style={{
-          padding:        '14px 32px', borderRadius: 12,
-          background:     C.primary, color: '#fff',
-          fontSize:       15, fontWeight: 700,
-          textDecoration: 'none',
-          display:        'inline-flex', alignItems: 'center', gap: 9,
-          boxShadow:      '0 4px 20px rgba(45,190,96,0.45)',
-          transition:     'background 0.2s, transform 0.15s',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background  = C.primaryHover;
-          e.currentTarget.style.transform   = 'scale(1.03)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background  = C.primary;
-          e.currentTarget.style.transform   = 'scale(1)';
-        }}
-      >
-        <UtensilsCrossed size={17} /> Explore Menu
-      </Link>
-      <Link
-        to="/reservations"
-        style={{
-          padding:        '14px 32px', borderRadius: 12,
-          background:     'rgba(255,255,255,0.14)',
-          backdropFilter: 'blur(10px)',
-          border:         '1.5px solid rgba(255,255,255,0.40)',
-          color:          '#fff',
-          fontSize:       15, fontWeight: 600,
-          textDecoration: 'none',
-          display:        'inline-flex', alignItems: 'center', gap: 9,
-          transition:     'background 0.2s, transform 0.15s',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.26)';
-          e.currentTarget.style.transform  = 'scale(1.03)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.14)';
-          e.currentTarget.style.transform  = 'scale(1)';
-        }}
-      >
-        <CalendarDays size={17} /> Book a Table
-      </Link>
-    </div>
-  </div>
+/* ── Floating particle (same as HeroSection) ── */
+const Particle = ({ style }) => (
+  <div className="bc-particle" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', ...style }} />
 );
+
+const PARTICLES = Array.from({ length: 14 }, (_, i) => ({
+  id:    i,
+  size:  4 + Math.random() * 6,
+  left:  `${5  + Math.random() * 90}%`,
+  top:   `${10 + Math.random() * 80}%`,
+  delay: `${Math.random() * 6}s`,
+  dur:   `${5  + Math.random() * 5}s`,
+}));
 
 /* ── Main carousel ── */
 const BannerCarousel = ({ restaurant, restaurantId }) => {
-  const slides        = buildSlides(restaurant?.bannerImage || restaurant?.coverImage || restaurant?.image);
-  const [current,  setCurrent ] = useState(0);
-  const [fading,   setFading  ] = useState(false);
-  const timerRef               = useRef(null);
-  const pausedRef              = useRef(false);
+  const slides   = buildSlides(restaurant?.bannerImage || restaurant?.coverImage || restaurant?.image);
+  const [active, setActive] = useState(0);
+  const [prev,   setPrev  ] = useState(null);
+  const [anim,   setAnim  ] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const timerRef            = useRef(null);
 
-  const goTo = useCallback((index) => {
-    const next = (index + slides.length) % slides.length;
-    setFading(true);
-    setTimeout(() => {
-      setCurrent(next);
-      setFading(false);
-    }, 350);
-  }, [slides.length]);
+  const goTo = (idx) => {
+    const next = (idx + slides.length) % slides.length;
+    if (next === active) return;
+    setPrev(active);
+    setActive(next);
+    setAnim(true);
+    setTimeout(() => { setPrev(null); setAnim(false); }, 950);
+  };
 
-  const startTimer = useCallback(() => {
-    clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      if (!pausedRef.current) {
-        goTo(current + 1);
-      }
-    }, 5000);
-  }, [current, goTo]);
+  const next  = () => goTo(active + 1);
+  const prev_ = () => goTo(active - 1);
 
+  /* Auto-play — same 4.5 s cadence as HeroSection */
   useEffect(() => {
-    startTimer();
-    return () => clearInterval(timerRef.current);
-  }, [startTimer]);
-
-  const handlePrev = () => { clearInterval(timerRef.current); goTo(current - 1); };
-  const handleNext = () => { clearInterval(timerRef.current); goTo(current + 1); };
+    if (paused) return;
+    timerRef.current = setTimeout(next, 4500);
+    return () => clearTimeout(timerRef.current);
+  }, [active, paused]); // eslint-disable-line
 
   return (
     <>
       <style>{`
-        @keyframes bc-ken-burns {
-          from { transform: scale(1.00); }
-          to   { transform: scale(1.07); }
+        /* ── Slide bg layers (identical to HeroSection) ── */
+        .bc-bg {
+          position: absolute; inset: 0;
+          background-size: cover; background-position: center;
+          will-change: transform, opacity;
         }
-        .bc-slide-img {
-          animation: bc-ken-burns 8s ease-in-out infinite alternate;
+        .bc-bg-enter {
+          animation: bcBgEnter 1s cubic-bezier(.4,0,.2,1) forwards;
         }
+        .bc-bg-exit {
+          animation: bcBgExit 1s cubic-bezier(.4,0,.2,1) forwards;
+        }
+        @keyframes bcBgEnter {
+          from { opacity: 0; transform: scale(1.07); }
+          to   { opacity: 1; transform: scale(1);    }
+        }
+        @keyframes bcBgExit {
+          from { opacity: 1; transform: scale(1);    }
+          to   { opacity: 0; transform: scale(0.97); }
+        }
+
+        /* ── Text entrance animations ── */
+        @keyframes bcSlideUpFade {
+          from { opacity: 0; transform: translateY(36px); }
+          to   { opacity: 1; transform: translateY(0);    }
+        }
+        @keyframes bcSlideLeftBounce {
+          0%   { opacity: 0; transform: translateX(-48px) scaleX(0.92); }
+          70%  { opacity: 1; transform: translateX(6px) scaleX(1.02);   }
+          100% { opacity: 1; transform: translateX(0) scaleX(1);        }
+        }
+        .bc-badge   { animation: bcSlideLeftBounce 0.65s cubic-bezier(.4,0,.2,1) 0.05s both; }
+        .bc-heading { animation: bcSlideUpFade 0.7s cubic-bezier(.4,0,.2,1) 0.2s  both; }
+        .bc-tagline { animation: bcSlideUpFade 0.7s cubic-bezier(.4,0,.2,1) 0.4s  both; }
+        .bc-cta     { animation: bcSlideUpFade 0.7s cubic-bezier(.4,0,.2,1) 0.6s  both; }
+
+        /* ── Decorative rays ── */
+        @keyframes bcRayPulse {
+          0%, 100% { opacity: 0.06; transform: scaleY(1);    }
+          50%       { opacity: 0.13; transform: scaleY(1.04); }
+        }
+        .bc-ray {
+          position: absolute; bottom: 0; width: 3px;
+          transform-origin: bottom center;
+          animation: bcRayPulse var(--dur, 3s) ease-in-out var(--delay, 0s) infinite;
+          pointer-events: none;
+          background: linear-gradient(to top, rgba(230,57,70,0.6), transparent);
+          border-radius: 99px;
+        }
+
+        /* ── Particles ── */
+        @keyframes bcParticleFloat {
+          0%, 100% { transform: translateY(0)     scale(1);    opacity: 0.18; }
+          50%       { transform: translateY(-22px) scale(1.15); opacity: 0.32; }
+        }
+        .bc-particle {
+          background: rgba(230,57,70,0.55);
+          animation: bcParticleFloat var(--pdur, 7s) ease-in-out var(--pdelay, 0s) infinite;
+        }
+
+        /* ── Arrows ── */
         .bc-arrow {
-          transition: background 0.2s, transform 0.15s;
+          transition: background-color 0.2s ease, transform 0.2s ease;
         }
         .bc-arrow:hover {
-          background: rgba(255,255,255,0.28) !important;
-          transform: scale(1.08);
+          background-color: rgba(230,57,70,0.75) !important;
+          transform: scale(1.1);
         }
-        .bc-dot {
-          transition: all 0.3s;
-          cursor: pointer;
-          border: none;
+
+        /* ── Dot indicators ── */
+        .bc-dot { transition: all 0.25s ease; }
+        .bc-dot:hover { transform: scale(1.2); }
+
+        /* ── CTA buttons ── */
+        .bc-cta-primary {
+          transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+          text-decoration: none;
         }
-        .bc-dot:hover { transform: scale(1.25); }
+        .bc-cta-primary:hover {
+          background-color: #C0252E !important;
+          transform: scale(1.03);
+          box-shadow: 0 8px 28px rgba(230,57,70,0.4) !important;
+        }
+        .bc-cta-ghost {
+          transition: background-color 0.2s ease, transform 0.2s ease;
+          text-decoration: none;
+        }
+        .bc-cta-ghost:hover {
+          background-color: rgba(255,255,255,0.22) !important;
+          transform: scale(1.03);
+        }
       `}</style>
 
-      <div
-        style={{
-          position:   'relative',
-          width:      '100%',
-          minHeight:  '80vh',
-          overflow:   'hidden',
-          marginTop:  -80,               /* slide under fixed 80px nav */
-          display:    'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#0F2318',          /* dark green fallback */
-        }}
-        onMouseEnter={() => { pausedRef.current = true;  }}
-        onMouseLeave={() => { pausedRef.current = false; }}
+      <section
+        className="relative overflow-hidden"
+        style={{ height: '100vh', minHeight: 560, marginTop: -80 }}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
       >
-        {/* ── Background image with cross-fade ── */}
-        <div
-          className="bc-slide-img"
-          style={{
-            position:           'absolute', inset: 0,
-            backgroundImage:    `url(${slides[current]})`,
-            backgroundSize:     'cover',
-            backgroundPosition: 'center',
-            opacity:            fading ? 0 : 1,
-            transition:         'opacity 0.7s ease-in-out',
-          }}
-        />
-
-        {/* ── Dark gradient overlay ── */}
-        <div
-          style={{
-            position:   'absolute', inset: 0,
-            background: 'linear-gradient(170deg, rgba(0,0,0,0.60) 0%, rgba(15,47,28,0.55) 100%)',
-            zIndex:     1,
-          }}
-        />
-
-        {/* ── Bottom gradient fade ── */}
-        <div
-          style={{
-            position:   'absolute', bottom: 0, left: 0, right: 0,
-            height:     '30%',
-            background: 'linear-gradient(to top, rgba(0,0,0,0.50), transparent)',
-            zIndex:     1,
-          }}
-        />
-
-        {/* ── Slide content ── */}
-        <div
-          style={{
-            position: 'relative', zIndex: 3,
-            width: '100%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '120px 24px 80px',
-            opacity:    fading ? 0 : 1,
-            transform:  fading ? 'translateY(12px)' : 'translateY(0)',
-            transition: 'opacity 0.55s ease-in-out, transform 0.55s ease-in-out',
-          }}
-        >
-          <SlideContent
-            restaurant={restaurant}
-            restaurantId={restaurantId}
-            isFirst={current === 0}
+        {/* ── Previous slide (fading out) ── */}
+        {prev !== null && (
+          <div
+            className="bc-bg bc-bg-exit"
+            style={{ backgroundImage: `url(${slides[prev]})`, zIndex: 1 }}
           />
-        </div>
+        )}
 
-        {/* ── Prev arrow ── */}
-        <button
-          onClick={handlePrev}
-          aria-label="Previous slide"
-          className="bc-arrow"
-          style={{
-            position:   'absolute', left: 20, top: '50%', transform: 'translateY(-50%)',
-            zIndex:     4,
-            width:      46, height: 46, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.16)', border: '1.5px solid rgba(255,255,255,0.35)',
-            cursor:     'pointer', color: '#fff',
-            display:    'flex', alignItems: 'center', justifyContent: 'center',
-            backdropFilter: 'blur(6px)',
-          }}
-        >
-          <ChevronLeft size={22} />
-        </button>
-
-        {/* ── Next arrow ── */}
-        <button
-          onClick={handleNext}
-          aria-label="Next slide"
-          className="bc-arrow"
-          style={{
-            position:   'absolute', right: 20, top: '50%', transform: 'translateY(-50%)',
-            zIndex:     4,
-            width:      46, height: 46, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.16)', border: '1.5px solid rgba(255,255,255,0.35)',
-            cursor:     'pointer', color: '#fff',
-            display:    'flex', alignItems: 'center', justifyContent: 'center',
-            backdropFilter: 'blur(6px)',
-          }}
-        >
-          <ChevronRight size={22} />
-        </button>
-
-        {/* ── Dot indicators ── */}
+        {/* ── Active slide background ── */}
         <div
-          style={{
-            position:   'absolute', bottom: 26, left: 0, right: 0,
-            display:    'flex', justifyContent: 'center',
-            gap:        8, zIndex: 4,
-          }}
-        >
-          {slides.map((_, i) => (
-            <button
+          key={active}
+          className="bc-bg bc-bg-enter"
+          style={{ backgroundImage: `url(${slides[active]})`, zIndex: 2 }}
+        />
+
+        {/* ── Dark overlay ── */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 3, background: 'rgba(0,0,0,0.46)' }} />
+
+        {/* ── Decorative green rays ── */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 4, pointerEvents: 'none' }}>
+          {[...Array(18)].map((_, i) => (
+            <div
               key={i}
-              className="bc-dot"
-              onClick={() => { clearInterval(timerRef.current); goTo(i); }}
-              aria-label={`Go to slide ${i + 1}`}
+              className="bc-ray"
               style={{
-                width:      i === current ? 28 : 10,
-                height:     10,
-                borderRadius: 5,
-                background: i === current ? C.primary : 'rgba(255,255,255,0.45)',
-                padding:    0,
+                left:      `${4 + i * 5.5}%`,
+                height:    `${28 + (i % 5) * 14}%`,
+                '--dur':   `${2.8 + (i % 4) * 0.7}s`,
+                '--delay': `${(i * 0.3) % 2.5}s`,
               }}
             />
           ))}
         </div>
 
-        {/* ── Slide counter ── */}
-        <div
-          style={{
-            position:   'absolute', top: 100, right: 24,
-            zIndex:     4,
-            background: 'rgba(0,0,0,0.35)',
-            backdropFilter: 'blur(8px)',
-            border:     '1px solid rgba(255,255,255,0.15)',
-            borderRadius: 20,
-            padding:    '4px 14px',
-            color:      'rgba(255,255,255,0.8)',
-            fontSize:   12, fontWeight: 600,
-          }}
-        >
-          {current + 1} / {slides.length}
+        {/* ── Floating particles ── */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 4, pointerEvents: 'none' }}>
+          {PARTICLES.map((p) => (
+            <Particle
+              key={p.id}
+              style={{
+                width: p.size, height: p.size,
+                left: p.left, top: p.top,
+                '--pdur':   p.dur,
+                '--pdelay': p.delay,
+              }}
+            />
+          ))}
         </div>
-      </div>
+
+        {/* ── Hero content ── */}
+        <div
+          style={{ position: 'absolute', inset: 0, zIndex: 10 }}
+          className="flex items-center justify-center px-6"
+        >
+          <div key={active} className="text-center w-full" style={{ maxWidth: 820 }}>
+
+            {/* Badge */}
+            <div className="bc-badge flex justify-center mb-5">
+              <span style={{
+                display: 'inline-block',
+                background: 'linear-gradient(135deg, #E63946 0%, #C0252E 100%)',
+                color: '#fff',
+                fontSize: 13, fontWeight: 700,
+                letterSpacing: '1.2px',
+                textTransform: 'uppercase',
+                padding: '6px 22px',
+                borderRadius: 4,
+                clipPath: 'polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%)',
+                boxShadow: '0 4px 18px rgba(230,57,70,0.38)',
+              }}>
+                🍽️ Welcome to {restaurant?.name || 'Our Restaurant'}
+              </span>
+            </div>
+
+            {/* Restaurant name */}
+            <h1 className="bc-heading" style={{
+              color: '#FFFFFF',
+              fontWeight: 800,
+              lineHeight: 1.1,
+              letterSpacing: '-1px',
+              marginBottom: 20,
+              textTransform: 'uppercase',
+            }}>
+              <span className="block" style={{ fontSize: 'clamp(2.2rem, 5.5vw, 3.8rem)' }}>
+                {restaurant?.name || 'Restaurant'}
+              </span>
+              {restaurant?.cuisine && (
+                <span className="block" style={{
+                  fontSize: 'clamp(1.1rem, 2.5vw, 1.7rem)',
+                  WebkitTextStroke: '1px rgba(255,255,255,0.25)',
+                  fontWeight: 600,
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase',
+                  marginTop: 6,
+                }}>
+                  {restaurant.cuisine}
+                </span>
+              )}
+            </h1>
+
+            {/* Tagline */}
+            {restaurant?.tagline && (
+              <p className="bc-tagline mx-auto" style={{
+                color: 'rgba(255,255,255,0.82)',
+                fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
+                fontWeight: 400,
+                lineHeight: 1.7,
+                maxWidth: 560,
+                marginBottom: 36,
+              }}>
+                {restaurant.tagline}
+              </p>
+            )}
+            {!restaurant?.tagline && (
+              <p className="bc-tagline mx-auto" style={{
+                color: 'rgba(255,255,255,0.82)',
+                fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
+                fontWeight: 400,
+                lineHeight: 1.7,
+                maxWidth: 560,
+                marginBottom: 36,
+              }}>
+                Crafted with passion. Served with love. Every plate tells a story worth savoring.
+              </p>
+            )}
+
+            {/* CTA Buttons */}
+            <div className="bc-cta flex flex-wrap items-center justify-center" style={{ gap: 16 }}>
+              <Link
+                to={`/restaurant/${restaurantId}/menu`}
+                className="bc-cta-primary flex items-center gap-2"
+                style={{
+                  height: 52, padding: '0 32px', borderRadius: 10,
+                  backgroundColor: '#E63946', color: '#FFFFFF',
+                  fontSize: 15, fontWeight: 700,
+                  boxShadow: '0 6px 22px rgba(230,57,70,0.35)',
+                }}
+              >
+                <UtensilsCrossed size={17} />
+                Explore Menu
+              </Link>
+              <Link
+                to="/reservations"
+                className="bc-cta-ghost flex items-center gap-2"
+                style={{
+                  height: 52, padding: '0 32px', borderRadius: 10,
+                  backgroundColor: 'rgba(255,255,255,0.12)',
+                  border: '1.5px solid rgba(255,255,255,0.72)',
+                  color: '#FFFFFF', fontSize: 15, fontWeight: 700,
+                }}
+              >
+                <CalendarDays size={17} />
+                Book a Table
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Arrow controls ── */}
+        <button
+          className="bc-arrow hidden sm:flex items-center justify-center"
+          onClick={prev_}
+          style={{
+            position: 'absolute', left: 24, top: '50%', transform: 'translateY(-50%)',
+            zIndex: 20, width: 48, height: 48, borderRadius: '50%',
+            border: 'none', cursor: 'pointer',
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            backdropFilter: 'blur(4px)',
+            color: '#fff',
+          }}
+          aria-label="Previous slide"
+        >
+          <ChevronLeft size={22} />
+        </button>
+        <button
+          className="bc-arrow hidden sm:flex items-center justify-center"
+          onClick={next}
+          style={{
+            position: 'absolute', right: 24, top: '50%', transform: 'translateY(-50%)',
+            zIndex: 20, width: 48, height: 48, borderRadius: '50%',
+            border: 'none', cursor: 'pointer',
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            backdropFilter: 'blur(4px)',
+            color: '#fff',
+          }}
+          aria-label="Next slide"
+        >
+          <ChevronRight size={22} />
+        </button>
+
+        {/* ── Dot indicators ── */}
+        <div style={{
+          position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 20, display: 'flex', gap: 10, alignItems: 'center',
+        }}>
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              className="bc-dot"
+              onClick={() => goTo(i)}
+              style={{
+                width: active === i ? 28 : 10,
+                height: 10, borderRadius: 5, border: 'none', cursor: 'pointer',
+                backgroundColor: active === i ? '#E63946' : 'rgba(255,255,255,0.45)',
+                transition: 'all 0.3s ease',
+                padding: 0,
+              }}
+              aria-label={`Slide ${i + 1}`}
+            />
+          ))}
+        </div>
+
+        {/* ── Scroll hint ── */}
+        <div style={{
+          position: 'absolute', bottom: 24, right: 32, zIndex: 20,
+          color: 'rgba(255,255,255,0.5)', fontSize: 12, letterSpacing: '1.5px',
+          textTransform: 'uppercase', fontWeight: 500,
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}
+          className="hidden lg:flex"
+        >
+          <span>Scroll</span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1v12M7 13l-4-4M7 13l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      </section>
     </>
   );
 };

@@ -16,8 +16,8 @@ import BannerCarousel from '../components/restaurant/BannerCarousel';
 
 /* ── Theme ── */
 const C = {
-  primary:      '#2DBE60',
-  primaryHover: '#22A455',
+  primary:      '#E63946',
+  primaryHover: '#C0252E',
   dark:         '#1F2937',
   muted:        '#6B7280',
   border:       '#E5E7EB',
@@ -51,7 +51,7 @@ const QuickCard = ({ to, icon, label, desc }) => (
   >
     <div style={{
       width: 58, height: 58, borderRadius: 14,
-      background: 'rgba(45,190,96,0.12)',
+      background: 'rgba(230,57,70,0.12)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       color: C.primary, marginBottom: 14,
     }}>
@@ -88,7 +88,7 @@ const RestaurantHomePage = () => {
         <section style={{ marginBottom: 64 }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <span style={{
-              display: 'inline-block', background: 'rgba(45,190,96,0.10)',
+              display: 'inline-block', background: 'rgba(230,57,70,0.10)',
               color: C.primary, fontSize: 12, fontWeight: 700,
               letterSpacing: '1.4px', textTransform: 'uppercase',
               padding: '4px 16px', borderRadius: 20, marginBottom: 10,

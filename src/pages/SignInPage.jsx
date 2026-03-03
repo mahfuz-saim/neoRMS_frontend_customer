@@ -14,8 +14,8 @@ import { useAuth } from '../context/AuthContext';
 
 /* ── Theme ── */
 const C = {
-  primary:      '#2DBE60',
-  primaryHover: '#22A455',
+  primary:      '#E63946',
+  primaryHover: '#C0252E',
   dark:         '#1F2937',
   gray:         '#6B7280',
   border:       '#E5E7EB',

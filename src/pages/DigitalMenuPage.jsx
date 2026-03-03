@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import FoodCard from '../components/menu/FoodCard';
 import FoodModal from '../components/menu/FoodModal';
@@ -6,17 +6,17 @@ import { getRestaurantMenu } from '../services/restaurantService';
 import { useRestaurant } from '../context/RestaurantContext';
 import { Utensils } from 'lucide-react';
 
-/* ─── Theme tokens ── */
+/* --- Theme tokens -- */
 const T = {
-  primary:   '#2DBE60',
+  primary:   '#E63946',
   dark:      '#1F2937',
   muted:     '#6B7280',
   border:    '#E5E7EB',
   sectionBg: '#F7FDF9',
-  badgeBg:   'rgba(45,190,96,0.12)',
+  badgeBg:   'rgba(230,57,70,0.12)',
 };
 
-/* ─── Normalize raw menuProduct API items → grouped category structure ── */
+/* --- Normalize raw menuProduct API items ? grouped category structure -- */
 const normaliseItem = (raw) => {
   const variants = Array.isArray(raw.variants) ? raw.variants : [];
   const basePrice = variants.length > 0
@@ -58,7 +58,7 @@ const buildCategoriesFromItems = (items) => {
   return Array.from(map.values());
 };
 
-/* ─── Skeleton loader ── */
+/* --- Skeleton loader -- */
 const MenuSkeleton = () => (
   <div style={{ maxWidth: 1100, margin: '40px auto', padding: '0 24px' }}>
     <style>{`@keyframes dm-skel { 0%,100%{opacity:1} 50%{opacity:.45} }`}</style>
@@ -82,7 +82,7 @@ const MenuSkeleton = () => (
   </div>
 );
 
-/* ─── useInView ── */
+/* --- useInView -- */
 const useInView = (threshold = 0.08) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
@@ -99,21 +99,20 @@ const useInView = (threshold = 0.08) => {
   return [ref, inView];
 };
 
-/* ─── Category section ── */
+/* --- Category section -- */
 const CategorySection = ({ category, onSelectItem }) => {
   const [ref, inView] = useInView(0.06);
   return (
     <section
       ref={ref}
       id={category.id}
-      className="scroll-mt-28"
-      style={{ marginTop: 96, marginBottom: 112 }}
+      style={{ marginTop: 24, marginBottom: 48 }}
     >
       <div
         className={inView ? 'dm-fade-in' : 'opacity-0'}
         style={{ marginBottom: 0 }}
       >
-        <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: T.primary, marginBottom: 12 }}>
+        <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: T.primary, margin: '0 0 10px' }}>
           {category.title}
         </h2>
         {category.description && (
@@ -121,7 +120,7 @@ const CategorySection = ({ category, onSelectItem }) => {
             {category.description}
           </p>
         )}
-        <div style={{ height: 1, backgroundColor: T.border, marginBottom: 48 }} />
+        <div style={{ height: 1, backgroundColor: T.border, marginBottom: 10 }} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
@@ -139,12 +138,12 @@ const CategorySection = ({ category, onSelectItem }) => {
   );
 };
 
-/* ─── Main page ── */
+/* --- Main page -- */
 const DigitalMenuPage = () => {
   /* restaurantId from URL params (works inside /restaurant/:restaurantId/menu) */
   const { restaurantId: paramId } = useParams();
 
-  /* Also read from context — RestaurantBoundary always sets it */
+  /* Also read from context � RestaurantBoundary always sets it */
   const { currentRestaurant } = useRestaurant();
   const ctxRestaurantId = currentRestaurant?.id ?? currentRestaurant?._id ?? null;
 
@@ -156,7 +155,7 @@ const DigitalMenuPage = () => {
   const [loading,    setLoading   ] = useState(true);
   const [apiError,   setApiError  ] = useState(null);
 
-  /* ── Fetch menu from backend — NO static fallback ── */
+  /* -- Fetch menu from backend � NO static fallback -- */
   useEffect(() => {
     if (!restaurantId) {
       setLoading(false);
@@ -172,7 +171,7 @@ const DigitalMenuPage = () => {
     getRestaurantMenu(restaurantId)
       .then((items) => {
         if (cancelled) return;
-        // Service already unwraps the envelope — items is always an array
+        // Service already unwraps the envelope � items is always an array
         const cats = buildCategoriesFromItems(items.map(normaliseItem));
         setCategories(cats);
         setActiveTab(cats[0]?.id ?? null);
@@ -187,7 +186,7 @@ const DigitalMenuPage = () => {
     return () => { cancelled = true; };
   }, [restaurantId]);
 
-  /* ── Sync active tab while scrolling ── */
+  /* -- Sync active tab while scrolling -- */
   useEffect(() => {
     if (categories.length === 0) return;
     const handleScroll = () => {
@@ -195,7 +194,7 @@ const DigitalMenuPage = () => {
         const el = document.getElementById(cat.id);
         if (!el) continue;
         const rect = el.getBoundingClientRect();
-        if (rect.top <= 140) setActiveTab(cat.id);
+        if (rect.top <= 96) setActiveTab(cat.id);
       }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -204,12 +203,16 @@ const DigitalMenuPage = () => {
 
   const scrollToCategory = (id) => {
     const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!el) return;
+    /* nav (80px) + tab bar (~40px) */
+    const OFFSET = 80 + 40;
+    const top = el.getBoundingClientRect().top + window.scrollY - OFFSET;
+    window.scrollTo({ top, behavior: 'smooth' });
   };
 
   if (loading) return <MenuSkeleton />;
 
-  /* Error state — no static fallback */
+  /* Error state � no static fallback */
   if (apiError) return (
     <div style={{ minHeight: 'calc(100vh - 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ textAlign: 'center', maxWidth: 400 }}>
@@ -233,7 +236,7 @@ const DigitalMenuPage = () => {
           transform: translateY(-6px);
           box-shadow: 0 16px 40px rgba(31,41,55,0.13);
         }
-        .popular-card:focus-visible { box-shadow: 0 0 0 3px #2DBE60; }
+        .popular-card:focus-visible { box-shadow: 0 0 0 3px #E63946; }
         .popular-card:hover .popular-card-img { transform: scale(1.05); }
 
         .dm-tab-btn {
@@ -247,12 +250,12 @@ const DigitalMenuPage = () => {
           font-size: 14px;
           font-weight: 500;
         }
-        .dm-tab-btn:hover { background-color: rgba(45,190,96,0.1); color: #2DBE60 !important; }
+        .dm-tab-btn:hover { background-color: rgba(45,190,96,0.1); color: #E63946 !important; }
       `}</style>
 
-      <div className="w-full" style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      <div className="w-full" style={{ backgroundColor: '#ffffff' }}>
 
-        {/* ── Sticky category tab bar ── */}
+        {/* -- Sticky category tab bar -- */}
         {categories.length > 0 && (
           <div
             className="sticky z-40 w-full"
@@ -267,7 +270,7 @@ const DigitalMenuPage = () => {
               style={{
                 maxWidth: 1100, width: '100%',
                 marginLeft: 'auto', marginRight: 'auto',
-                padding: '10px 24px',
+                padding: '2px 16px',
                 display: 'flex', alignItems: 'center', gap: 4,
                 overflowX: 'auto',
               }}
@@ -290,13 +293,16 @@ const DigitalMenuPage = () => {
           </div>
         )}
 
-        {/* ── Menu content ── */}
+        {/* spacer between tab bar and first section */}
+        <div style={{ height: 12 }} />
+
+        {/* -- Menu content -- */}
         <div
           style={{
             maxWidth: 1100, width: '100%',
-            marginLeft: 'auto', marginRight: 'auto',
+            margin: '0 auto',
             paddingLeft: 24, paddingRight: 24,
-            paddingTop: 48, paddingBottom: 96,
+            paddingBottom: 64,
           }}
         >
           {categories.length === 0 ? (

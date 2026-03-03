@@ -38,7 +38,7 @@ const ProtectedRoute = () => {
       >
         <div style={{
           width: '40px', height: '40px', borderRadius: '50%',
-          border: '3px solid #E5E7EB', borderTopColor: '#2DBE60',
+          border: '3px solid #E5E7EB', borderTopColor: '#E63946',
           animation: 'spin 0.75s linear infinite',
         }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

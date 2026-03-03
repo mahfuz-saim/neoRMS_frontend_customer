@@ -1,17 +1,17 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 
 const PLACEHOLDER = 'https://res.cloudinary.com/dltp00ewe/image/upload/v1772005066/alex-munsell-Yr4n8O_3UPc-unsplash_peadau.jpg';
 
 const T = {
-  primary: '#2DBE60',
+  primary: '#E63946',
   dark:    '#1F2937',
   muted:   '#6B7280',
   border:  '#E5E7EB',
 };
 
 const FoodCard = ({ item, onClick }) => {
-  /* ── Price display ─────────────────────────────────────────────── */
+  /* -- Price display ----------------------------------------------- */
   const displayPrice = (() => {
     if (Array.isArray(item.variants) && item.variants.length > 0) {
       const prices = item.variants.map((v) => Number(v.price ?? 0));
@@ -22,11 +22,11 @@ const FoodCard = ({ item, onClick }) => {
     return `$${Number(item.price ?? 0).toFixed(2)}`;
   })();
 
-  /* ── Image source with useState fallback ───────────────────────
-     Priority: images[0]  →  item.image  →  PLACEHOLDER
+  /* -- Image source with useState fallback -----------------------
+     Priority: images[0]  ?  item.image  ?  PLACEHOLDER
      Using useState lets React re-render cleanly when onError fires,
      avoiding any direct DOM manipulation. 
-  ─────────────────────────────────────────────────────────────── */
+  --------------------------------------------------------------- */
   const initialSrc = item.images?.[0] || item.image || PLACEHOLDER;
 
   const [imgSrc, setImgSrc] = useState(initialSrc);
@@ -48,12 +48,12 @@ const FoodCard = ({ item, onClick }) => {
       opacity: item.isAvailable === false ? 0.6 : 1,
     }}
   >
-    {/* ── Image ── */}
+    {/* -- Image -- */}
     <div
       className="relative overflow-hidden"
       style={{ aspectRatio: '1/1', borderRadius: 10, marginBottom: 12, background: '#F3F4F6' }}
     >
-      {/* Single <img> always rendered — onError swaps src to placeholder */}
+      {/* Single <img> always rendered � onError swaps src to placeholder */}
       <img
         src={imgSrc}
         alt={item.name ?? 'Menu item'}
@@ -68,7 +68,7 @@ const FoodCard = ({ item, onClick }) => {
         <span
           className="absolute top-2 left-2"
           style={{
-            backgroundColor: 'rgba(45,190,96,0.90)',
+            backgroundColor: 'rgba(230,57,70,0.90)',
             backdropFilter: 'blur(4px)',
             color: '#fff',
             fontSize: 10, fontWeight: 700, letterSpacing: '0.6px',
@@ -79,7 +79,7 @@ const FoodCard = ({ item, onClick }) => {
         </span>
       )}
 
-      {/* Unavailable overlay — driven by status, NOT image load result */}
+      {/* Unavailable overlay � driven by status, NOT image load result */}
       {item.isAvailable === false && (
         <div style={{
           position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.55)',
@@ -90,7 +90,7 @@ const FoodCard = ({ item, onClick }) => {
       )}
     </div>
 
-    {/* ── Content ── */}
+    {/* -- Content -- */}
     <div style={{ padding: '0 4px 4px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
       <h3
         style={{
@@ -113,14 +113,14 @@ const FoodCard = ({ item, onClick }) => {
           aria-label={`Add ${item.name} to cart`}
           style={{
             width: 32, height: 32, borderRadius: '50%',
-            backgroundColor: 'rgba(45,190,96,0.10)',
+            backgroundColor: 'rgba(230,57,70,0.10)',
             border: 'none', cursor: item.isAvailable === false ? 'not-allowed' : 'pointer', flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: T.primary,
             transition: 'background-color 0.2s ease',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(45,190,96,0.22)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(45,190,96,0.10)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(230,57,70,0.22)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(230,57,70,0.10)'; }}
         >
           <ShoppingCart size={15} strokeWidth={2} />
         </button>

@@ -1,11 +1,13 @@
 import React from 'react';
 import { MapPin, Phone, Utensils } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
+import { theme } from '../../theme/colors';
 
+const T = theme.colors;
 const C = {
-  bg:      '#0F2318',
-  surface: '#1A3D28',
-  primary: '#2DBE60',
+  bg:      '#1A0A0A',
+  surface: '#2A1010',
+  primary: T.primary,
   muted:   'rgba(255,255,255,0.55)',
   border:  'rgba(255,255,255,0.08)',
 };
@@ -14,7 +16,7 @@ const Footer = () => {
   /* currentRestaurant is null when no restaurant is selected (e.g. on homepage) */
   const { currentRestaurant: restaurant } = useRestaurant();
 
-  const name     = restaurant?.name        || 'GreenBite Restaurant';
+  const name     = restaurant?.name        || 'neoRMS Restaurant';
   const tagline  = restaurant?.tagline     || 'Crafted with passion. Served with love.';
   const location = restaurant?.location    || null;
   const contact  = restaurant?.contactInfo || null;

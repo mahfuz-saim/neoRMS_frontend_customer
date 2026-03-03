@@ -123,7 +123,7 @@ const HeroSection = () => {
           transform-origin: bottom center;
           animation: rayPulse var(--dur, 3s) ease-in-out var(--delay, 0s) infinite;
           pointer-events: none;
-          background: linear-gradient(to top, rgba(45,190,96,0.6), transparent);
+          background: linear-gradient(to top, rgba(230,57,70,0.6), transparent);
           border-radius: 99px;
         }
 
@@ -133,7 +133,7 @@ const HeroSection = () => {
           50%       { transform: translateY(-22px) scale(1.15); opacity: 0.32; }
         }
         .hero-particle {
-          background: rgba(45, 190, 96, 0.55);
+          background: rgba(230,57,70,0.55);
           animation: particleFloat var(--pdur, 7s) ease-in-out var(--pdelay, 0s) infinite;
         }
 
@@ -146,7 +146,7 @@ const HeroSection = () => {
           transition: background-color 0.2s ease, transform 0.2s ease;
         }
         .hero-arrow:hover {
-          background-color: rgba(45,190,96,0.75) !important;
+          background-color: rgba(230,57,70,0.75) !important;
           transform: scale(1.1);
         }
 
@@ -156,9 +156,9 @@ const HeroSection = () => {
           text-decoration: none;
         }
         .h-cta-primary:hover {
-          background-color: #22A455 !important;
+          background-color: #C0252E !important;
           transform: scale(1.03);
-          box-shadow: 0 8px 28px rgba(45,190,96,0.4) !important;
+          box-shadow: 0 8px 28px rgba(230,57,70,0.4) !important;
         }
         .h-cta-ghost {
           transition: background-color 0.2s ease, transform 0.2s ease;
@@ -236,7 +236,7 @@ const HeroSection = () => {
             <div className="hero-badge flex justify-center mb-5">
               <span style={{
                 display: 'inline-block',
-                background: 'linear-gradient(135deg, #2DBE60 0%, #1a9e4e 100%)',
+                background: 'linear-gradient(135deg, #E63946 0%, #C0252E 100%)',
                 color: '#fff',
                 fontSize: 13,
                 fontWeight: 700,
@@ -245,7 +245,7 @@ const HeroSection = () => {
                 padding: '6px 22px',
                 borderRadius: 4,
                 clipPath: 'polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%)',
-                boxShadow: '0 4px 18px rgba(45,190,96,0.38)',
+                boxShadow: '0 4px 18px rgba(230,57,70,0.38)',
               }}>
                 {slide.badge}
               </span>
@@ -290,9 +290,9 @@ const HeroSection = () => {
                 className="h-cta-primary flex items-center gap-2"
                 style={{
                   height: 52, padding: '0 32px', borderRadius: 10,
-                  backgroundColor: '#2DBE60', color: '#FFFFFF',
+                  backgroundColor: '#E63946', color: '#FFFFFF',
                   fontSize: 15, fontWeight: 700,
-                  boxShadow: '0 6px 22px rgba(45,190,96,0.35)',
+                  boxShadow: '0 6px 22px rgba(230,57,70,0.35)',
                 }}
               >
                 <UtensilsCrossed size={17} />
@@ -358,7 +358,7 @@ const HeroSection = () => {
               style={{
                 width: active === i ? 28 : 10,
                 height: 10, borderRadius: 5, border: 'none', cursor: 'pointer',
-                backgroundColor: active === i ? '#2DBE60' : 'rgba(255,255,255,0.45)',
+                backgroundColor: active === i ? '#E63946' : 'rgba(255,255,255,0.45)',
                 transition: 'all 0.3s ease',
                 padding: 0,
               }}

@@ -15,8 +15,8 @@ import { useRestaurant } from '../context/RestaurantContext';
 
 /* ── Theme ── */
 const C = {
-  primary:      '#2DBE60',
-  primaryHover: '#22A455',
+  primary:      '#E63946',
+  primaryHover: '#C0252E',
   dark:         '#1F2937',
   muted:        '#6B7280',
   border:       '#E5E7EB',
@@ -49,7 +49,7 @@ const CartPage = () => {
   const isEmpty  = cart.length === 0;
 
   const applyCoupon = () => {
-    if (coupon.trim().toUpperCase() === 'GREENBITE10') {
+    if (coupon.trim().toUpperCase() === 'NEORMS10') {
       setCouponOk(true);
       setCouponErr(false);
     } else {
@@ -164,7 +164,7 @@ const CartPage = () => {
                   padding: '11px 28px', borderRadius: 10,
                   background: C.primary, color: '#fff', border: 'none',
                   fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(45,190,96,0.28)',
+                  boxShadow: '0 4px 14px rgba(230,57,70,0.28)',
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = C.primaryHover)}
                 onMouseLeave={(e) => (e.currentTarget.style.background = C.primary)}
@@ -244,7 +244,7 @@ const CartPage = () => {
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input
                     className="cp-coupon-input"
-                    placeholder="e.g. GREENBITE10"
+                    placeholder="e.g. NEORMS10"
                     value={coupon}
                     onChange={(e) => { setCoupon(e.target.value); setCouponOk(false); setCouponErr(false); }}
                     onKeyDown={(e) => { if (e.key === 'Enter') applyCoupon(); }}
@@ -338,7 +338,7 @@ const CartItemCard = ({ item, onRemove, onQty }) => (
           {item.category}
         </p>
       )}
-      <p style={{ fontSize: 14, fontWeight: 700, color: '#2DBE60', margin: 0 }}>
+      <p style={{ fontSize: 14, fontWeight: 700, color: '#E63946', margin: 0 }}>
         ${(item.price * (item.quantity ?? 1)).toFixed(2)}
       </p>
     </div>
@@ -380,7 +380,7 @@ const SummaryRow = ({ label, value, highlight }) => (
     alignItems: 'center', marginBottom: 10,
   }}>
     <span style={{ fontSize: 14, color: '#6B7280' }}>{label}</span>
-    <span style={{ fontSize: 14, fontWeight: 600, color: highlight ? '#2DBE60' : '#1F2937' }}>
+    <span style={{ fontSize: 14, fontWeight: 600, color: highlight ? '#E63946' : '#1F2937' }}>
       {value < 0 ? `-$${Math.abs(value).toFixed(2)}` : `$${value.toFixed(2)}`}
     </span>
   </div>

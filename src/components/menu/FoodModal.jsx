@@ -1,17 +1,17 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { X, ShoppingCart, Star, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 
 const T = {
-  primary:     '#2DBE60',
-  primaryDark: '#22A455',
+  primary:     '#E63946',
+  primaryDark: '#C0252E',
   dark:        '#1F2937',
   muted:       '#6B7280',
   border:      '#E5E7EB',
   cardBg:      '#FFFFFF',
-  badgeBg:     'rgba(45,190,96,0.12)',
+  badgeBg:     'rgba(230,57,70,0.12)',
 };
 
 const Stars = ({ rating }) => (
@@ -24,7 +24,7 @@ const Stars = ({ rating }) => (
 const PLACEHOLDER = 'https://res.cloudinary.com/dltp00ewe/image/upload/v1772005066/alex-munsell-Yr4n8O_3UPc-unsplash_peadau.jpg';
 
 const FoodModal = ({ item, onClose, restaurantId = null }) => {
-  // Safe images array — always an array of non-empty strings
+  // Safe images array � always an array of non-empty strings
   const rawImages = Array.isArray(item.images) ? item.images.filter(Boolean) : [];
   const images    = rawImages.length > 0 ? rawImages : (item.image ? [item.image] : [PLACEHOLDER]);
 
@@ -143,7 +143,7 @@ const FoodModal = ({ item, onClose, restaurantId = null }) => {
           padding: '40px 48px',          /* balanced margin on all 4 sides */
         }}
       >
-        {/* Modal card — two-column, fully contained in viewport */}
+        {/* Modal card � two-column, fully contained in viewport */}
         <div
           onClick={(e) => e.stopPropagation()}
           className="bg-white rounded-2xl w-full"
@@ -162,9 +162,9 @@ const FoodModal = ({ item, onClose, restaurantId = null }) => {
           aria-modal="true"
           aria-label={item.name}
         >
-          {/* ── LEFT: image column (close button lives here so it never overlaps price) ── */}
+          {/* -- LEFT: image column (close button lives here so it never overlaps price) -- */}
           <div style={{ width: 300, flexShrink: 0, position: 'relative', background: '#F3F4F6' }}>
-            {/* Close × — anchored to image column, clear of the price */}
+            {/* Close � � anchored to image column, clear of the price */}
             <button
               onClick={handleClose}
               className="fm-x-btn absolute flex items-center justify-center rounded-full"
@@ -253,7 +253,7 @@ const FoodModal = ({ item, onClose, restaurantId = null }) => {
             )}
           </div>
 
-          {/* ── RIGHT: scrollable details column ── */}
+          {/* -- RIGHT: scrollable details column -- */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '22px 24px 24px' }}>
 
             {/* Title + computed price */}
@@ -289,7 +289,7 @@ const FoodModal = ({ item, onClose, restaurantId = null }) => {
               </p>
             )}
 
-            {/* ── Variant selector ── */}
+            {/* -- Variant selector -- */}
             {variants.length > 0 && (
               <div style={{ marginBottom: 20 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: T.dark, marginBottom: 10 }}>Size</p>
@@ -327,7 +327,7 @@ const FoodModal = ({ item, onClose, restaurantId = null }) => {
               </div>
             )}
 
-            {/* ── Addons ── */}
+            {/* -- Addons -- */}
             {addonOptions.length > 0 && (
               <div style={{ marginBottom: 20 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: T.dark, marginBottom: 8 }}>Add-ons</p>
@@ -369,7 +369,7 @@ const FoodModal = ({ item, onClose, restaurantId = null }) => {
                   color: '#fff', border: 'none',
                   fontSize: 14, fontWeight: 700,
                   cursor: (added || item.isAvailable === false) ? 'default' : 'pointer',
-                  boxShadow: '0 4px 14px rgba(45,190,96,0.28)',
+                  boxShadow: '0 4px 14px rgba(230,57,70,0.28)',
                   opacity: item.isAvailable === false ? 0.55 : 1,
                 }}
               >

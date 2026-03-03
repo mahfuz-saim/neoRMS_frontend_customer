@@ -1,22 +1,22 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Flame, Utensils } from 'lucide-react';
 import FoodCard  from './FoodCard';
 import FoodModal from './FoodModal';
 import { getRestaurantMenu } from '../../services/restaurantService';
 
-/* ─── Theme tokens ──────────────────────────────────────────────── */
+/* --- Theme tokens ------------------------------------------------ */
 const T = {
-  primary:     '#2DBE60',
-  primaryDark: '#22A455',
+  primary:     '#E63946',
+  primaryDark: '#C0252E',
   dark:        '#1F2937',
   muted:       '#6B7280',
   border:      '#E5E7EB',
   sectionBg:   '#F7FDF9',
-  badgeBg:     'rgba(45,190,96,0.12)',
+  badgeBg:     'rgba(230,57,70,0.12)',
 };
 
-/* ─── Skeleton card ─────────────────────────────────────────────── */
+/* --- Skeleton card ----------------------------------------------- */
 const SkeletonCard = () => (
   <div style={{
     borderRadius: 12, overflow: 'hidden',
@@ -32,7 +32,7 @@ const SkeletonCard = () => (
   </div>
 );
 
-/* ─── Empty state ───────────────────────────────────────────────── */
+/* --- Empty state ------------------------------------------------- */
 const EmptyState = () => (
   <div style={{
     textAlign: 'center', padding: '48px 24px',
@@ -44,12 +44,12 @@ const EmptyState = () => (
       No popular items yet
     </p>
     <p style={{ fontSize: 13, color: T.muted, margin: 0 }}>
-      Check back soon — the menu is being updated!
+      Check back soon � the menu is being updated!
     </p>
   </div>
 );
 
-/* ─── Normalise raw API item ────────────────────────────────────── */
+/* --- Normalise raw API item -------------------------------------- */
 const normalise = (raw) => {
   const variants = Array.isArray(raw.variants) ? raw.variants : [];
   const images   = Array.isArray(raw.images) && raw.images.length > 0
@@ -78,7 +78,7 @@ const normalise = (raw) => {
   };
 };
 
-/* ─── Pick the popular subset ───────────────────────────────────── */
+/* --- Pick the popular subset ------------------------------------- */
 const pickPopular = (items, max = 4) => {
   const flagged = items.filter(
     (i) => i.badge && ['best seller', 'popular', 'trending', 'hot'].includes(i.badge.toLowerCase()),
@@ -89,7 +89,7 @@ const pickPopular = (items, max = 4) => {
     .slice(0, max);
 };
 
-/* ─── useInView hook ── */
+/* --- useInView hook -- */
 const useInView = (threshold = 0.1) => {
   const ref = useRef(null);
   const [inView, setInView] = React.useState(false);
@@ -107,7 +107,7 @@ const useInView = (threshold = 0.1) => {
 };
 
 /**
- * @param {string|null} restaurantId — from RestaurantContext; null → global fallback
+ * @param {string|null} restaurantId � from RestaurantContext; null ? global fallback
  */
 const PopularToday = ({ restaurantId = null }) => {
   const [items,    setItems   ] = useState([]);
@@ -115,12 +115,12 @@ const PopularToday = ({ restaurantId = null }) => {
   const [selected, setSelected] = useState(null);
   const [headRef,  headIn    ] = useInView(0.15);
 
-  /* ── Fetch / derive popular items ───────────────────────────── */
+  /* -- Fetch / derive popular items ----------------------------- */
   useEffect(() => {
     let cancelled = false;
 
     if (!restaurantId) {
-      // No restaurant context — hide section
+      // No restaurant context � hide section
       setItems([]);
       return;
     }
@@ -155,16 +155,16 @@ const PopularToday = ({ restaurantId = null }) => {
           transform: translateY(-6px);
           box-shadow: 0 16px 40px rgba(31,41,55,0.13);
         }
-        .popular-card:focus-visible { box-shadow: 0 0 0 3px #2DBE60; }
+        .popular-card:focus-visible { box-shadow: 0 0 0 3px #E63946; }
         .popular-card:hover .popular-card-img { transform: scale(1.05); }
         .pt-cta-btn {
           text-decoration: none;
           transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
         }
         .pt-cta-btn:hover {
-          background-color: #22A455 !important;
+          background-color: #C0252E !important;
           transform: scale(1.04);
-          box-shadow: 0 8px 24px rgba(45,190,96,0.32) !important;
+          box-shadow: 0 8px 24px rgba(230,57,70,0.32) !important;
         }
       `}</style>
 
@@ -178,7 +178,7 @@ const PopularToday = ({ restaurantId = null }) => {
           paddingLeft: 24, paddingRight: 24,
         }}>
 
-          {/* ── Heading ── */}
+          {/* -- Heading -- */}
           <div ref={headRef} className={`text-center ${headIn ? 'pt-visible' : 'opacity-0'}`} style={{ marginBottom: 48 }}>
             <span
               className="inline-flex items-center gap-1.5 mb-4"
@@ -202,17 +202,17 @@ const PopularToday = ({ restaurantId = null }) => {
             </p>
           </div>
 
-          {/* ── Skeleton ── */}
+          {/* -- Skeleton -- */}
           {loading && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
               {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)}
             </div>
           )}
 
-          {/* ── Empty ── */}
+          {/* -- Empty -- */}
           {!loading && items.length === 0 && <EmptyState />}
 
-          {/* ── Grid ── */}
+          {/* -- Grid -- */}
           {!loading && items.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
               {items.map((item, i) => (
@@ -227,7 +227,7 @@ const PopularToday = ({ restaurantId = null }) => {
             </div>
           )}
 
-          {/* ── CTA ── */}
+          {/* -- CTA -- */}
           {!loading && (
             <div className="text-center" style={{ marginTop: 64, marginBottom: 0 }}>
               <Link
@@ -237,7 +237,7 @@ const PopularToday = ({ restaurantId = null }) => {
                   height: 52, padding: '0 32px', borderRadius: 10,
                   backgroundColor: T.primary, color: '#fff',
                   fontSize: 15, fontWeight: 700,
-                  boxShadow: '0 6px 20px rgba(45,190,96,0.28)',
+                  boxShadow: '0 6px 20px rgba(230,57,70,0.28)',
                 }}
               >
                 View Full Menu

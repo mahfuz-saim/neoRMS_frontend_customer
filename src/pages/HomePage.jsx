@@ -35,7 +35,7 @@ const HomePage = () => (
         >
           <div
             className="flex items-center justify-center mb-5 rounded-full transition-all duration-200 group-hover:scale-110"
-            style={{ width: 80, height: 80, backgroundColor: 'rgba(45,190,96,0.1)', color: '#2DBE60' }}
+            style={{ width: 80, height: 80, backgroundColor: 'rgba(45,190,96,0.1)', color: '#E63946' }}
           >
             <Store size={36} />
           </div>
@@ -47,7 +47,7 @@ const HomePage = () => (
       {/* Stats ribbon */}
       <section
         className="rounded-2xl grid grid-cols-2 lg:grid-cols-4 gap-0 overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #2DBE60 0%, #1a9e4e 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #E63946 0%, #C0252E 100%)' }}
       >
         {stats.map(({ icon, value, label }, i) => (
           <div

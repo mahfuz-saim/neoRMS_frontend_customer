@@ -9,23 +9,26 @@
    No hero banner. No popular dishes.
    ───────────────────────────────────────────────────────────────── */
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { MapPin, ChevronRight, Search, Utensils, X } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { MapPin, ChevronRight, Utensils, X, Truck, QrCode, Camera, XCircle } from 'lucide-react';
 import { getAllRestaurants } from '../services/restaurantService';
 import { useRestaurant } from '../context/RestaurantContext';
+import { theme } from '../theme/colors';
 
-/* ── Theme ── */
+/* ── Theme tokens ── */
+const T = theme.colors;
 const C = {
-  primary:      '#2DBE60',
-  primaryHover: '#22A455',
-  dark:         '#1F2937',
-  muted:        '#6B7280',
-  border:       '#E5E7EB',
-  bg:           '#F4FAF6',
-  cardBg:       '#FFFFFF',
-  shadow:       '0 2px 14px rgba(31,41,55,0.07)',
-  shadowHover:  '0 8px 32px rgba(31,41,55,0.14)',
+  primary:     T.primary,
+  primaryHover:T.primaryHover,
+  highlight:   T.highlight,
+  dark:        T.dark,
+  muted:       T.muted,
+  border:      T.border,
+  bg:          T.bg,
+  cardBg:      T.cardBg,
+  shadow:      theme.shadows.card,
+  shadowHover: theme.shadows.cardHover,
 };
 
 /* ── Food categories for filtering ── */
@@ -79,10 +82,10 @@ const CategoryIcon = ({ cat, active, onClick }) => {
       <div style={{
         width: 76, height: 76, borderRadius: '50%', padding: 3, flexShrink: 0,
         background: active
-          ? 'linear-gradient(135deg, #2DBE60 0%, #22A455 100%)'
+          ? `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryHover} 100%)`
           : 'transparent',
         boxShadow: active
-          ? '0 0 0 2px rgba(45,190,96,0.18), 0 6px 18px rgba(45,190,96,0.22)'
+          ? `0 0 0 2px rgba(230,57,70,0.18), 0 6px 18px rgba(230,57,70,0.22)`
           : lit ? '0 4px 14px rgba(31,41,55,0.11)' : 'none',
         transform: lit ? 'translateY(-4px) scale(1.07)' : 'translateY(0) scale(1)',
         transition: 'all 0.22s ease',
@@ -165,7 +168,7 @@ const RestaurantCard = ({ restaurant, onClick }) => {
         {/* "Open" pill */}
         <div style={{
           position:         'absolute', top: 12, right: 12,
-          background:       'rgba(45,190,96,0.92)', color: '#fff',
+          background:       C.primary, color: '#fff',
           fontSize:         11, fontWeight: 700, letterSpacing: '0.5px',
           padding:          '3px 10px', borderRadius: 20, zIndex: 2,
         }}>
@@ -194,8 +197,35 @@ const RestaurantCard = ({ restaurant, onClick }) => {
             fontSize: 12, color: C.muted,
             display: 'flex', alignItems: 'center', gap: 4, margin: '0 0 14px',
           }}>
-            <MapPin size={12} color={C.primary} />
-            {restaurant.location}
+            <button
+              title="View on map"
+              aria-label="View on map"
+              onClick={(e) => {
+                e.stopPropagation();
+                const q = encodeURIComponent(
+                  (restaurant.lat && restaurant.lng)
+                    ? `${restaurant.lat},${restaurant.lng}`
+                    : restaurant.location
+                );
+                window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, '_blank', 'noopener');
+              }}
+              style={{
+                background: 'none', border: 'none', padding: 0,
+                cursor: 'pointer', display: 'flex', alignItems: 'center',
+                flexShrink: 0,
+                borderRadius: 4,
+                transition: 'transform 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.25)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+            >
+              <MapPin size={13} color={C.primary} strokeWidth={2.2} />
+            </button>
+            <span style={{
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
+            }}>
+              {restaurant.location}
+            </span>
           </p>
         )}
 
@@ -206,7 +236,7 @@ const RestaurantCard = ({ restaurant, onClick }) => {
         }}>
           <span style={{
             fontSize: 12, fontWeight: 600, color: C.primary,
-            background: 'rgba(45,190,96,0.10)', padding: '4px 10px',
+            background: `rgba(230,57,70,0.10)`, padding: '4px 10px',
             borderRadius: 20,
           }}>
             View Menu
@@ -233,12 +263,19 @@ const restaurantMatchesCategory = (r, cat) => {
 const RestaurantsPage = () => {
   const navigate = useNavigate();
   const { setCurrentRestaurant } = useRestaurant();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [restaurants,    setRestaurants   ] = useState([]);
   const [loading,        setLoading       ] = useState(true);
   const [error,          setError         ] = useState(null);
-  const [search,         setSearch        ] = useState('');
   const [activeCategory, setActiveCategory] = useState(null);
+
+  /* Search is driven by URL ?q= param so it stays in sync with the nav search bar */
+  const search    = searchParams.get('q') || '';
+  const setSearch = (val) => {
+    if (val) setSearchParams({ q: val }, { replace: true });
+    else     setSearchParams({},         { replace: true });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -280,8 +317,41 @@ const RestaurantsPage = () => {
   const clearAll       = () => { setSearch(''); setActiveCategory(null); };
   const hasFilters     = !!(search || activeCategory);
 
+  /* ── QR Scan modal ── */
+  const [qrOpen,    setQrOpen   ] = useState(false);
+  const [camError,  setCamError ] = useState(null);
+  const videoRef  = useRef(null);
+  const streamRef = useRef(null);
+
+  useEffect(() => {
+    if (!qrOpen) {
+      /* stop any running stream when modal closes */
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+      setCamError(null);
+      return;
+    }
+    setCamError(null);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCamError('Camera not supported on this device.');
+      return;
+    }
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .then((stream) => {
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      })
+      .catch(() => setCamError('Camera access denied. Please allow camera permission.'));
+  }, [qrOpen]);
+
   return (
-    <div style={{ minHeight: 'calc(100vh - 80px)', backgroundColor: C.bg, paddingBottom: 60 }}>
+    <div style={{ minHeight: 'calc(100vh - var(--nav-h, 80px))' }}>
       <style>{`
         @keyframes rp-pulse {
           0%, 100% { opacity: 1; }
@@ -289,8 +359,8 @@ const RestaurantsPage = () => {
         }
         .rp-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 24px;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 28px;
         }
         @media (max-width: 640px) {
           .rp-grid { grid-template-columns: 1fr; }
@@ -314,80 +384,214 @@ const RestaurantsPage = () => {
         }
         .rp-cat-row::-webkit-scrollbar { display: none; }
         .rp-cat-row { scrollbar-width: none; }
-        /* Search bar */
-        .rp-search-wrap {
-          background: #ffffff;
-          box-shadow: 0 1px 0 0 ${C.border};
-        }
-        .rp-search-inner {
-          max-width: 640px;
-          margin: 0 auto;
-          padding: 16px 20px 14px;
-        }
-        .rp-search-input-box {
-          display: flex; align-items: center; gap: 10;
-          background: ${C.bg};
-          border-radius: 999px;
-          padding: 12px 20px;
-          border: 1.5px solid ${C.border};
-          box-shadow: 0 2px 10px rgba(31,41,55,0.06);
-          transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        .rp-search-input-box:focus-within {
-          border-color: ${C.primary};
-          box-shadow: 0 0 0 3px rgba(45,190,96,0.13), 0 2px 10px rgba(31,41,55,0.06);
-        }
         /* Sticky band */
         .rp-sticky {
           position: sticky;
-          top: 80px;
+          top: var(--nav-h, 80px);
           z-index: 30;
+          background: #FFFFFF;
+          box-shadow: 0 2px 12px rgba(31,41,55,0.06);
+        }
+        /* QR FAB */
+        .rp-qr-fab {
+          position: fixed;
+          bottom: 28px;
+          right: 28px;
+          z-index: 200;
+          width: 58px;
+          height: 58px;
+          border-radius: 50%;
+          background: ${C.primary};
+          color: #fff;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 2px;
+          box-shadow: 0 4px 20px rgba(230,57,70,0.40);
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .rp-qr-fab:hover {
+          transform: scale(1.08);
+          box-shadow: 0 6px 28px rgba(230,57,70,0.50);
+        }
+        .rp-qr-fab span {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+          line-height: 1;
+        }
+        /* QR modal overlay */
+        .rp-qr-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 400;
+          background: rgba(0,0,0,0.70);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+        }
+        .rp-qr-modal {
           background: #fff;
-          box-shadow: 0 2px 12px rgba(31,41,55,0.07);
+          border-radius: 20px;
+          width: 100%;
+          max-width: 380px;
+          overflow: hidden;
+          box-shadow: 0 24px 64px rgba(0,0,0,0.30);
+          position: relative;
+        }
+        .rp-qr-video {
+          width: 100%;
+          aspect-ratio: 1;
+          object-fit: cover;
+          display: block;
+          background: #111;
+        }
+        .rp-qr-close {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          background: rgba(0,0,0,0.55);
+          border: none;
+          border-radius: 50%;
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .rp-qr-close:hover { background: rgba(0,0,0,0.80); }
+        .rp-section-label {
+          font-size: 18px;
+          font-weight: 700;
+          color: ${C.dark};
+          margin: 0;
+          letter-spacing: -0.2px;
+          line-height: 1.3;
+        }
+        .rp-section-sub {
+          font-size: 13px;
+          color: ${C.muted};
+          margin: 3px 0 0;
+        }
+        /* Promo banner card */
+        .rp-promo-card {
+          background: linear-gradient(120deg, #FFF5F3 0%, #FFE8E4 100%);
+          border: 1.5px solid rgba(230,57,70,0.18);
+          border-radius: 20px;
+          box-shadow: 0 4px 20px rgba(230,57,70,0.10);
+          overflow: hidden;
+        }
+        .rp-promo-signup-btn {
+          transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
+          white-space: nowrap;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .rp-promo-signup-btn:hover {
+          background-color: ${C.primaryHover} !important;
+          transform: scale(1.03);
+          box-shadow: 0 4px 14px rgba(230,57,70,0.30);
+        }
+        /* Half-width on desktop, full on mobile */
+        .rp-promo-wrap {
+          width: 50%;
+          min-width: 320px;
+        }
+        @media (max-width: 767px) {
+          .rp-promo-wrap { width: 100%; }
         }
       `}</style>
 
-      {/* ① Sticky Search + Categories band */}
-      <div className="rp-sticky">
+      {/* ══ ZONE 1: Promo — soft blush ══ */}
+      <div style={{ background: '#FFF0EE', paddingTop: 28, paddingBottom: 18 }}>
+      <div style={{ maxWidth: 1140, margin: '0 auto', padding: '0 24px' }}>
+        <div className="rp-promo-wrap">
+        <div className="rp-promo-card" style={{
+          padding: '22px 28px',
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', gap: 20,
+        }}>
+          {/* Left: label + heading + CTA */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: '1.2px',
+              color: C.primary, textTransform: 'uppercase',
+            }}>
+              First-time here?
+            </span>
+            <p style={{ fontSize: 17, fontWeight: 800, color: C.dark, margin: 0, lineHeight: 1.3 }}>
+              Free delivery on your first order
+            </p>
+            <p style={{ fontSize: 13, color: C.muted, margin: '3px 0 12px', lineHeight: 1.4 }}>
+              Sign up now and save on every meal delivered to your door.
+            </p>
+            <a
+              href="/sign-up"
+              className="rp-promo-signup-btn"
+              style={{
+                alignSelf: 'flex-start',
+                fontSize: 13.5, fontWeight: 700,
+                background: C.primary,
+                color: '#fff',
+                padding: '9px 22px', borderRadius: 10,
+              }}
+            >
+              Sign Up Free
+            </a>
+          </div>
+          {/* Right: delivery icon */}
+          <div style={{
+            flexShrink: 0,
+            width: 76, height: 76,
+            borderRadius: '50%',
+            background: 'rgba(230,57,70,0.09)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Truck size={36} color={C.primary} strokeWidth={1.7} />
+          </div>
+        </div>
+        </div>{/* end rp-promo-wrap */}
+      </div>{/* end inner container */}
+      </div>{/* end Zone 1 */}
 
-        {/* Search bar */}
-        <div className="rp-search-wrap">
-          <div className="rp-search-inner">
-            <div className="rp-search-input-box">
-              <Search size={17} color={C.muted} style={{ flexShrink: 0 }} />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search restaurants by name, cuisine or location…"
-                style={{
-                  border: 'none', outline: 'none', flex: 1,
-                  fontSize: 14.5, color: C.dark, background: 'transparent',
-                }}
-              />
-              {search && (
+      {/* ══ ZONE 2: Cuisine — pure white ══ */}
+      <div style={{ background: '#FFFFFF' }}>
+      {/* ② Browse by Cuisine — sticky heading + icons */}
+      <div className="rp-sticky" style={{ marginTop: 20 }}>
+        <div style={{ borderBottom: `1px solid ${C.border}`, padding: '16px 0 12px' }}>
+          <div style={{ maxWidth: 1140, margin: '0 auto', padding: '0 24px' }}>
+
+            {/* Section title row */}
+            <div style={{
+              display: 'flex', alignItems: 'baseline',
+              justifyContent: 'space-between', marginBottom: 16,
+            }}>
+              <div>
+                <h2 className="rp-section-label">Cuisine</h2>
+              </div>
+              {activeCategory && (
                 <button
-                  onClick={() => setSearch('')}
+                  onClick={() => setActiveCategory(null)}
                   style={{
-                    border: 'none', background: 'none', cursor: 'pointer',
-                    color: C.muted, padding: 0, display: 'flex', alignItems: 'center',
-                    flexShrink: 0,
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: 12.5, color: C.primary, fontWeight: 600,
+                    textDecoration: 'underline', flexShrink: 0,
                   }}
-                  aria-label="Clear search"
                 >
-                  <X size={16} />
+                  Clear
                 </button>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* ② Food Category Icons */}
-        <div style={{
-          background: '#FAFAFA',
-          borderBottom: `1px solid ${C.border}`,
-          padding: '16px 0 12px',
-        }}>
-          <div style={{ maxWidth: 1140, margin: '0 auto', padding: '0 16px' }}>
+            {/* Icon row */}
             <div className="rp-cat-row">
               {CATEGORIES.map((cat) => (
                 <CategoryIcon
@@ -398,15 +602,19 @@ const RestaurantsPage = () => {
                 />
               ))}
             </div>
+
           </div>
         </div>
-
       </div>{/* end sticky band */}
+      </div>{/* end Zone 2 */}
+
+      {/* ══ ZONE 3: Restaurants — light gray ══ */}
+      <div style={{ background: '#F8F9FB', paddingBottom: 60 }}>
 
       {/* ③ Active filter chips */}
       {hasFilters && (
         <div style={{
-          maxWidth: 1140, margin: '20px auto 0', padding: '0 20px',
+          maxWidth: 1140, margin: '20px auto 0', padding: '0 24px',
           display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
         }}>
           <span style={{ fontSize: 13, color: C.muted, fontWeight: 500 }}>Filters:</span>
@@ -414,9 +622,9 @@ const RestaurantsPage = () => {
           {search && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'rgba(45,190,96,0.10)', color: C.primary,
+              background: `rgba(230,57,70,0.10)`, color: C.primary,
               fontSize: 12.5, fontWeight: 600, padding: '4px 12px',
-              borderRadius: 20, border: '1px solid rgba(45,190,96,0.25)',
+              borderRadius: 20, border: `1px solid rgba(230,57,70,0.25)`,
             }}>
               &ldquo;{search}&rdquo;
               <button onClick={() => setSearch('')}
@@ -430,9 +638,9 @@ const RestaurantsPage = () => {
           {activeCategory && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'rgba(45,190,96,0.10)', color: C.primary,
+              background: `rgba(230,57,70,0.10)`, color: C.primary,
               fontSize: 12.5, fontWeight: 600, padding: '4px 12px',
-              borderRadius: 20, border: '1px solid rgba(45,190,96,0.25)',
+              borderRadius: 20, border: `1px solid rgba(230,57,70,0.25)`,
             }}>
               {CATEGORIES.find((c) => c.id === activeCategory)?.label}
               <button onClick={() => setActiveCategory(null)}
@@ -452,20 +660,31 @@ const RestaurantsPage = () => {
       )}
 
       {/* ④ Restaurant Cards */}
-      <div style={{ maxWidth: 1140, margin: '32px auto 0', padding: '0 20px' }}>
+      <div style={{ maxWidth: 1140, margin: '32px auto 0', padding: '0 24px' }}>
 
         {/* Section header */}
         {!loading && !error && (
-          <div style={{ marginBottom: 28, paddingBottom: 16, borderBottom: `1.5px solid ${C.border}`, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ marginBottom: 28, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
             <div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: C.dark, margin: 0 }}>
+              <h2 style={{
+                fontSize: 22, fontWeight: 800, color: C.dark,
+                margin: 0, letterSpacing: '-0.3px', lineHeight: 1.3,
+              }}>
                 {hasFilters ? 'Search Results' : 'All Restaurants'}
               </h2>
+              <p style={{ fontSize: 13, color: C.muted, margin: '4px 0 0', fontWeight: 400 }}>
+                {hasFilters
+                  ? `Showing results for${search ? ` "${search}"` : ''}${activeCategory ? ` in ${CATEGORIES.find(c => c.id === activeCategory)?.label}` : ''}`
+                  : 'Browse and order from restaurants near you'}
+              </p>
             </div>
-            <span style={{ fontSize: 13, color: C.muted, flexShrink: 0 }}>
+            <span style={{
+              fontSize: 13, color: C.muted, flexShrink: 0, paddingTop: 6,
+              fontWeight: 500,
+            }}>
               {filtered.length === 0
                 ? 'No restaurants found'
-                : `${filtered.length} restaurant${filtered.length !== 1 ? 's' : ''}${hasFilters ? ' found' : ''}`}
+                : `${filtered.length} restaurant${filtered.length !== 1 ? 's' : ''}`}
             </span>
           </div>
         )}
@@ -541,6 +760,114 @@ const RestaurantsPage = () => {
           </div>
         )}
       </div>
+      </div>{/* end Zone 3 */}
+
+      {/* ── QR Scan Floating Action Button ── */}
+      <button
+        className="rp-qr-fab"
+        onClick={() => setQrOpen(true)}
+        aria-label="Scan QR code"
+        title="Scan QR Code"
+      >
+        <QrCode size={24} strokeWidth={2} />
+        <span>SCAN</span>
+      </button>
+
+      {/* ── QR Scan Modal ── */}
+      {qrOpen && (
+        <div className="rp-qr-overlay" onClick={() => setQrOpen(false)}>
+          <div className="rp-qr-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{
+              padding: '18px 20px 14px',
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: `rgba(230,57,70,0.10)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <QrCode size={18} color={C.primary} />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: C.dark }}>Scan QR Code</p>
+                <p style={{ margin: 0, fontSize: 12, color: C.muted }}>Point your camera at a restaurant QR</p>
+              </div>
+            </div>
+
+            {/* Camera viewport */}
+            <div style={{ position: 'relative' }}>
+              {camError ? (
+                <div style={{
+                  width: '100%', aspectRatio: '1', background: '#111',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center', gap: 12,
+                }}>
+                  <Camera size={48} color="#555" />
+                  <p style={{ color: '#aaa', fontSize: 13, textAlign: 'center', padding: '0 24px', margin: 0 }}>
+                    {camError}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <video
+                    ref={videoRef}
+                    className="rp-qr-video"
+                    playsInline
+                    muted
+                    autoPlay
+                  />
+                  {/* Scanning frame overlay */}
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    pointerEvents: 'none',
+                  }}>
+                    <div style={{
+                      width: '60%', aspectRatio: '1',
+                      border: `2.5px solid ${C.primary}`,
+                      borderRadius: 16,
+                      boxShadow: `0 0 0 2000px rgba(0,0,0,0.35)`,
+                    }} />
+                  </div>
+                  {/* Scan line animation */}
+                  <style>{`
+                    @keyframes rp-scan-line {
+                      0%   { top: 20%; }
+                      50%  { top: 76%; }
+                      100% { top: 20%; }
+                    }
+                    .rp-scan-anim {
+                      position: absolute;
+                      left: 20%; width: 60%; height: 2px;
+                      background: linear-gradient(90deg, transparent, ${C.primary}, transparent);
+                      animation: rp-scan-line 2s ease-in-out infinite;
+                      pointer-events: none;
+                    }
+                  `}</style>
+                  <div className="rp-scan-anim" />
+                </>
+              )}
+
+              {/* Close button */}
+              <button
+                className="rp-qr-close"
+                onClick={() => setQrOpen(false)}
+                aria-label="Close QR scanner"
+              >
+                <XCircle size={20} color="#fff" />
+              </button>
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '14px 20px 18px', textAlign: 'center' }}>
+              <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>
+                Tap outside or press ✕ to dismiss
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

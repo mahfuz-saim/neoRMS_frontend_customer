@@ -25,7 +25,7 @@
    ───────────────────────────────────────────────────────────────── */
 
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 /* Providers */
 import { AuthProvider }         from '../context/AuthContext';
@@ -50,7 +50,6 @@ import AboutRestaurantPage    from '../pages/AboutRestaurantPage';
 import RestaurantBoundary     from '../components/restaurant/RestaurantBoundary';
 
 /* Pages */
-import HomePage               from '../pages/HomePage';
 import QRScanPage             from '../pages/QRScanPage';
 import DigitalMenuPage        from '../pages/DigitalMenuPage';
 import ItemCustomizationPage  from '../pages/ItemCustomizationPage';
@@ -89,7 +88,7 @@ const AppRoutes = () => (
                 <Route element={<CustomerLayout />}>
 
                   {/* ── Public routes ── */}
-                  <Route path="/"                  element={<HomePage />} />
+                  <Route path="/"                  element={<Navigate to="/restaurants" replace />} />
                   <Route path="/qr-scan"           element={<QRScanPage />} />
                   <Route path="/menu"              element={<DigitalMenuPage />} />
                   <Route path="/daily-menu"        element={<DigitalMenuPage />} />

@@ -17,7 +17,7 @@ import { useRestaurant } from '../../context/RestaurantContext';
 import { useCart } from '../../context/CartContext';
 
 const C = {
-  primary: '#2DBE60',
+  primary: '#E63946',
   dark:    '#1F2937',
   muted:   '#6B7280',
   bg:      '#F4FAF6',

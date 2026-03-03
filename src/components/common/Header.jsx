@@ -1,21 +1,23 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Utensils, CalendarDays, Bell, LogIn, LogOut, User } from 'lucide-react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { ShoppingCart, Menu, X, Utensils, CalendarDays, Bell, LogIn, LogOut, User, Search } from 'lucide-react';
 import { CartContext } from '../../context/CartContext';
 import { useAuth, AUTH_STATUS } from '../../context/AuthContext';
 import { useRestaurant } from '../../context/RestaurantContext';
+import { theme } from '../../theme/colors';
 
-/* ─── Theme tokens ─── */
+/* ─── Theme tokens (sourced from centralized theme) ─── */
+const T = theme.colors;
 const C = {
-  bg:           '#FFFFFF',
-  primary:      '#2DBE60',
-  primaryHover: '#22A455',
-  dark:         '#1F2937',
-  gray:         '#6B7280',
-  border:       '#E5E7EB',
-  cartBg:       '#F3F4F6',
-  cartHover:    '#E5E7EB',
-  shadow:       '0px 6px 20px rgba(45, 190, 96, 0.25)',
+  bg:           T.navBg,
+  primary:      T.primary,
+  primaryHover: T.primaryHover,
+  dark:         T.dark,
+  gray:         T.muted,
+  border:       T.border,
+  cartBg:       T.cartBg,
+  cartHover:    T.cartHover,
+  shadow:       T.ctaShadow,
 };
 
 const BASE_NAV_LINKS = [
@@ -44,9 +46,18 @@ const Header = () => {
   const isRestaurantsPage = location.pathname === '/restaurants';
   const isRestaurantHome  = !!restaurantId && location.pathname === `/restaurant/${restaurantId}`;
 
+  /* Search param for /restaurants page (synced with RestaurantsPage via URL) */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navSearchVal = isRestaurantsPage ? (searchParams.get('q') || '') : '';
+  const setNavSearch = (val) => {
+    if (val) setSearchParams({ q: val }, { replace: true });
+    else setSearchParams({}, { replace: true });
+  };
+
   /* Dynamic nav rules:
      - Inside a restaurant  → full restaurant-scoped 6-item nav
-     - On / or /restaurants → minimal discovery nav (Home + Restaurants only)
+     - On /restaurants      → only Restaurants (no Home) + search in center
+     - On /                 → Home + Restaurants
      - Everywhere else      → standard BASE_NAV_LINKS
   */
   const navLinks = restaurantId
@@ -58,7 +69,11 @@ const Header = () => {
         { to: '/reservations',                     label: 'Dine In'           },
         { to: `/restaurant/${restaurantId}/about`, label: 'About Us'          },
       ]
-    : (isHome || isRestaurantsPage)
+    : isRestaurantsPage
+      ? [
+          { to: '/restaurants', label: 'Restaurants' },
+        ]
+    : isHome
       ? [
           { to: '/',            label: 'Home'        },
           { to: '/restaurants', label: 'Restaurants' },
@@ -67,7 +82,7 @@ const Header = () => {
 
   /* Logo destination + text */
   const logoTo   = restaurantId ? `/restaurant/${restaurantId}` : '/';
-  const logoText = currentRestaurant?.name ? currentRestaurant.name : 'GreenBite';
+  const logoText = currentRestaurant?.name ? currentRestaurant.name : 'neoRMS';
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
   /* Active nav label — first link whose `to` exactly matches the current path.
      Using label identity (not `to`) ensures only ONE item is ever active,
@@ -170,7 +185,7 @@ const Header = () => {
           transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
         }
         .nb-mobile-link:hover {
-          background-color: rgba(45,190,96,0.08);
+          background-color: rgba(230,57,70,0.08);
           color: ${C.primary} !important;
         }
         .nb-hamburger {
@@ -193,8 +208,34 @@ const Header = () => {
           cursor: pointer; width: 100%; text-align: left;
           transition: background-color 0.15s;
         }
-        .nb-user-item:hover { background-color: rgba(45,190,96,0.08); color: ${C.primary}; }
+        .nb-user-item:hover { background-color: rgba(230,57,70,0.08); color: ${C.primary}; }
         .nb-user-item.danger:hover { background-color: #FEF2F2; color: #EF4444; }
+
+        /* ── Navbar search (Restaurants page only) ── */
+        .nb-nav-search {
+          display: flex; align-items: center; gap: 8px;
+          background: ${T.neutralLight};
+          border: 1.5px solid ${C.border};
+          border-radius: 999px;
+          padding: 7px 18px;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          width: clamp(260px, 24vw, 440px);
+        }
+        .nb-nav-search:focus-within {
+          border-color: ${C.primary};
+          box-shadow: 0 0 0 3px rgba(230,57,70,0.13);
+        }
+        .nb-nav-search input {
+          border: none; outline: none; background: transparent;
+          font-size: 14px; color: ${C.dark}; flex: 1; min-width: 0;
+        }
+        .nb-nav-search input::placeholder { color: ${C.gray}; }
+        .nb-nav-search-clear {
+          background: none; border: none; cursor: pointer; padding: 0;
+          color: ${C.gray}; display: flex; align-items: center; flex-shrink: 0;
+          transition: color 0.15s;
+        }
+        .nb-nav-search-clear:hover { color: ${C.primary}; }
       `}</style>
 
       <header
@@ -238,23 +279,47 @@ const Header = () => {
           </Link>
 
           {/* Desktop nav – centre */}
-          <nav className="hidden md:flex items-center" style={{ gap: 28 }}>
-            {navLinks.map(({ to, label, onClick }) => (
-              <Link
-                key={label}
-                to={to}
-                onClick={onClick}
-                className={`nb-link${isNavActive(label) ? ' nb-active' : ''}`}
-                style={{
-                  color: linkColor(label),
-                  fontSize: 15, fontWeight: 500, letterSpacing: '0.3px', whiteSpace: 'nowrap',
-                  transition: 'color 0.3s ease',
-                }}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
+          <div className="hidden md:flex items-center" style={{ gap: 16 }}>
+            <nav className="flex items-center" style={{ gap: 28 }}>
+              {navLinks.map(({ to, label, onClick }) => (
+                <Link
+                  key={label}
+                  to={to}
+                  onClick={onClick}
+                  className={`nb-link${isNavActive(label) ? ' nb-active' : ''}`}
+                  style={{
+                    color: linkColor(label),
+                    fontSize: 15, fontWeight: 500, letterSpacing: '0.3px', whiteSpace: 'nowrap',
+                    transition: 'color 0.3s ease',
+                  }}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+
+            {/* Search bar — visible only on /restaurants */}
+            {isRestaurantsPage && (
+              <div className="nb-nav-search">
+                <Search size={15} color={C.gray} style={{ flexShrink: 0 }} />
+                <input
+                  value={navSearchVal}
+                  onChange={(e) => setNavSearch(e.target.value)}
+                  placeholder="Search restaurants…"
+                  aria-label="Search restaurants"
+                />
+                {navSearchVal && (
+                  <button
+                    className="nb-nav-search-clear"
+                    onClick={() => setNavSearch('')}
+                    aria-label="Clear search"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Right actions */}
           <div className="flex items-center flex-shrink-0" style={{ gap: 10 }}>
@@ -424,7 +489,7 @@ const Header = () => {
                   className="nb-mobile-link"
                   style={{
                     color: isNavActive(label) ? C.primary : C.dark,
-                    backgroundColor: isNavActive(label) ? 'rgba(45,190,96,0.08)' : 'transparent',
+                    backgroundColor: isNavActive(label) ? 'rgba(230,57,70,0.08)' : 'transparent',
                   }}
                   onClick={() => { onClick?.(); setMobileOpen(false); }}
                 >

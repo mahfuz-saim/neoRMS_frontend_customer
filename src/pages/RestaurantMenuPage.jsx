@@ -19,11 +19,11 @@ import { getRestaurantMenu } from '../services/restaurantService';
 
 /* ── Theme tokens ── */
 const T = {
-  primary:   '#2DBE60',
+  primary:   '#E63946',
   dark:      '#1F2937',
   muted:     '#6B7280',
   border:    '#E5E7EB',
-  badgeBg:   'rgba(45,190,96,0.12)',
+  badgeBg:   'rgba(230,57,70,0.12)',
 };
 
 /* ─────────────────────────────────────────────────────────────────
@@ -279,7 +279,7 @@ const RestaurantMenuPage = () => {
           transform: translateY(-6px);
           box-shadow: 0 16px 40px rgba(31,41,55,0.13);
         }
-        .popular-card:focus-visible { box-shadow: 0 0 0 3px #2DBE60; }
+        .popular-card:focus-visible { box-shadow: 0 0 0 3px #E63946; }
         .popular-card:hover .popular-card-img { transform: scale(1.05); }
 
         .rm-tab-btn {
@@ -293,7 +293,7 @@ const RestaurantMenuPage = () => {
           font-size: 14px;
           font-weight: 500;
         }
-        .rm-tab-btn:hover { background-color: rgba(45,190,96,0.1); color: #2DBE60 !important; }
+        .rm-tab-btn:hover { background-color: rgba(45,190,96,0.1); color: #E63946 !important; }
       `}</style>
 
       <div className="w-full" style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
@@ -339,7 +339,7 @@ const RestaurantMenuPage = () => {
           maxWidth: 1100, width: '100%',
           marginLeft: 'auto', marginRight: 'auto',
           paddingLeft: 24, paddingRight: 24,
-          paddingTop: 57, paddingBottom: 64,
+          paddingTop: 7, paddingBottom: 64,
         }}>
           {categories.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 0', color: T.muted }}>
