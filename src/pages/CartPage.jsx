@@ -9,10 +9,11 @@
 
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, ShoppingBag, Loader2, CheckCircle2 } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, ShoppingBag, Loader2, CheckCircle2, Banknote, CreditCard, Utensils, Package } from 'lucide-react';
 import { CartContext } from '../context/CartContext';
 import { useRestaurant } from '../context/RestaurantContext';
-import { validateCoupon } from '../services/orderService';
+import { validateCoupon, placeOrder, buildOrderPayload } from '../services/orderService';
+import { getTablesByRestaurant } from '../services/tableService';
 
 /* ── Theme ── */
 const C = {
@@ -52,6 +53,35 @@ const CartPage = () => {
    */
   const [couponData,           setCouponData          ] = useState(null);
   const [cartChangedMsg,       setCartChangedMsg      ] = useState('');
+  const [paymentMethod,        setPaymentMethod       ] = useState('cash'); // 'cash' | 'online'
+  const [orderType,            setOrderType           ] = useState('dine-in'); // 'dine-in' | 'takeaway'
+  const [couponId,             setCouponId            ] = useState(null); // UUID from backend
+
+  // ── Table selection (dine-in only) ───────────────────────────
+  const [tables,               setTables              ] = useState([]);
+  const [tablesLoading,        setTablesLoading       ] = useState(false);
+  const [tablesError,          setTablesError         ] = useState('');
+  const [selectedTableId,      setSelectedTableId     ] = useState(null);
+  const [showConfirmModal,     setShowConfirmModal    ] = useState(false);
+  const [additionalNotes,      setAdditionalNotes     ] = useState('');
+  const [isPlacingOrder,       setIsPlacingOrder      ] = useState(false);
+  const [orderPlaceError,      setOrderPlaceError     ] = useState('');
+
+  useEffect(() => {
+    if (orderType !== 'dine-in' || !restaurantId) {
+      setTables([]);
+      setSelectedTableId(null);
+      return;
+    }
+    let cancelled = false;
+    setTablesLoading(true);
+    setTablesError('');
+    getTablesByRestaurant(restaurantId)
+      .then((data) => { if (!cancelled) setTables(data); })
+      .catch(() => { if (!cancelled) setTablesError('Could not load tables.'); })
+      .finally(() => { if (!cancelled) setTablesLoading(false); });
+    return () => { cancelled = true; };
+  }, [orderType, restaurantId]);
 
   // ── Derived totals (all in cents, display converts /100) ──────
   const subtotal           = cartTotal;                                       // dollars (float)
@@ -75,6 +105,7 @@ const CartPage = () => {
         setIsCouponApplied(false);
         setCouponCode('');
         setCouponData(null);
+        setCouponId(null);
         setCartChangedMsg('Cart updated. Please reapply your coupon.');
         const t = setTimeout(() => setCartChangedMsg(''), 5000);
         return () => clearTimeout(t);
@@ -90,6 +121,7 @@ const CartPage = () => {
     setCouponInput('');
     setCouponError('');
     setCartChangedMsg('');
+    setCouponId(null);
   };
 
   // ── Apply coupon via API ───────────────────────────────────────
@@ -114,9 +146,12 @@ const CartPage = () => {
       const origAmt  = Number(benefit?.originalAmount ?? originalTotalCents);
       const discAmt  = Number(benefit?.discountAmount  ?? 0);
       const finalAmt = Number(benefit?.finalAmount     ?? (origAmt - discAmt));
+      // Capture coupon UUID if backend returns it (e.g. res.couponId or res.id)
+      const resolvedCouponId = res?.couponId ?? res?.id ?? res?.benefit?.couponId ?? null;
 
       setCouponData({ originalAmount: origAmt, discountAmount: discAmt, finalAmount: finalAmt });
       setCouponCode(code);
+      setCouponId(resolvedCouponId);
       setIsCouponApplied(true);
       setCouponError('');
       setCartChangedMsg('');
@@ -366,6 +401,126 @@ const CartPage = () => {
                 </>
               )}
 
+              {/* ── Payment Method ── */}
+              <div style={{ marginBottom: 18 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: C.dark, marginBottom: 10 }}>Payment Method</p>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {[
+                    { key: 'cash',   label: 'Cash',    Icon: Banknote },
+                    { key: 'online', label: 'Online',  Icon: CreditCard },
+                  ].map(({ key, label, Icon }) => {
+                    const active = paymentMethod === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setPaymentMethod(key)}
+                        style={{
+                          flex: 1, padding: '10px 8px',
+                          border: `2px solid ${active ? C.primary : C.border}`,
+                          borderRadius: 11,
+                          background: active ? 'rgba(230,57,70,0.06)' : '#fff',
+                          cursor: 'pointer',
+                          display: 'flex', flexDirection: 'column',
+                          alignItems: 'center', gap: 6,
+                          transition: 'border-color 0.2s, background-color 0.2s',
+                        }}
+                      >
+                        <Icon size={20} color={active ? C.primary : C.muted} strokeWidth={1.8} />
+                        <span style={{
+                          fontSize: 12, fontWeight: active ? 700 : 500,
+                          color: active ? C.primary : C.muted,
+                        }}>
+                          {label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* ── Order Type ── */}
+              <div style={{ marginBottom: 18 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: C.dark, marginBottom: 10 }}>Order Type</p>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {[
+                    { key: 'dine-in',  label: 'Dine In',  Icon: Utensils },
+                    { key: 'takeaway', label: 'Parcel', Icon: Package  },
+                  ].map(({ key, label, Icon }) => {
+                    const active = orderType === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setOrderType(key)}
+                        style={{
+                          flex: 1, padding: '10px 8px',
+                          border: `2px solid ${active ? C.primary : C.border}`,
+                          borderRadius: 11,
+                          background: active ? 'rgba(230,57,70,0.06)' : '#fff',
+                          cursor: 'pointer',
+                          display: 'flex', flexDirection: 'column',
+                          alignItems: 'center', gap: 6,
+                          transition: 'border-color 0.2s, background-color 0.2s',
+                        }}
+                      >
+                        <Icon size={20} color={active ? C.primary : C.muted} strokeWidth={1.8} />
+                        <span style={{
+                          fontSize: 12, fontWeight: active ? 700 : 500,
+                          color: active ? C.primary : C.muted,
+                        }}>
+                          {label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* ── Table selector (dine-in only) ── */}
+              {orderType === 'dine-in' && (
+                <div style={{ marginBottom: 18 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: C.dark, marginBottom: 10 }}>Select Table</p>
+                  {tablesLoading ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: C.muted, fontSize: 13 }}>
+                      <Loader2 size={14} style={{ animation: 'cp-spin 0.7s linear infinite' }} />
+                      Loading tables…
+                    </div>
+                  ) : tablesError ? (
+                    <p style={{ fontSize: 12, color: '#EF4444', margin: 0 }}>⚠ {tablesError}</p>
+                  ) : tables.length === 0 ? (
+                    <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>No tables available.</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                      {tables.map((t) => {
+                        const active = selectedTableId === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => setSelectedTableId(active ? null : t.id)}
+                            style={{
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                              padding: '9px 13px',
+                              border: `2px solid ${active ? C.primary : C.border}`,
+                              borderRadius: 10,
+                              background: active ? 'rgba(230,57,70,0.06)' : '#fff',
+                              cursor: 'pointer',
+                              transition: 'border-color 0.2s, background-color 0.2s',
+                              width: '100%',
+                            }}
+                          >
+                            <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? C.primary : C.dark }}>
+                              Table {t.tableNumber}
+                            </span>
+                            <span style={{ fontSize: 12, color: active ? C.primary : C.muted }}>
+                              Capacity: {t.capacity}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* ── Coupon section ── */}
               <div style={{ marginBottom: 18 }}>
                 {/* Cart-changed warning */}
@@ -450,17 +605,9 @@ const CartPage = () => {
               <button
                 className="cp-checkout-btn"
                 disabled={isEmpty}
-                onClick={() =>
-                  navigate('/order-review', {
-                    state: {
-                      finalTotalCents,
-                      discountAmountCents,
-                      couponCode: isCouponApplied ? couponCode : undefined,
-                    },
-                  })
-                }
+                onClick={() => setShowConfirmModal(true)}
               >
-                Proceed to Checkout · ${(finalTotalCents / 100).toFixed(2)} <ArrowRight size={16} />
+              Proceed<ArrowRight size={16} />
               </button>
 
               {/* Continue shopping */}
@@ -487,7 +634,231 @@ const CartPage = () => {
           </div>
         )}
       </div>
-    </div>
+
+    {/* ══════════════════════════════════════════
+        Confirm Order Modal
+       ══════════════════════════════════════════ */}
+    {showConfirmModal && (
+      <div
+        onClick={() => setShowConfirmModal(false)}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '16px',
+        }}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            background: '#fff', borderRadius: 18,
+            boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
+            width: '100%', maxWidth: 420,
+            maxHeight: '75vh',
+            display: 'flex', flexDirection: 'column',
+            overflow: 'hidden',
+          }}
+        >
+          {/* ── Sticky header ── */}
+          <div style={{ padding: '24px 24px 0', flexShrink: 0 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: C.dark, margin: '0 0 18px', textAlign: 'center' }}>
+              Order Summary
+            </h2>
+          </div>
+
+          {/* ── Scrollable body ── */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px' }}>
+
+          {/* Items list */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
+            {cart.map((item) => (
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, color: C.dark, flex: 1, marginRight: 8 }}>
+                  <span style={{ fontWeight: 700 }}>{item.quantity ?? 1}×</span> {item.name}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: C.dark, flexShrink: 0 }}>
+                  ${((item.price + (item.addons ?? []).reduce((s, a) => s + Number(a.price ?? 0), 0)) * (item.quantity ?? 1)).toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: C.border, marginBottom: 14 }} />
+
+          {/* Totals */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 13, color: C.muted }}>Subtotal</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.dark }}>${Number(subtotal).toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 13, color: C.muted }}>Tax ({Math.round(TAX_RATE * 100)}%)</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.dark }}>${Number(tax).toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 13, color: C.muted }}>Service fee</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.dark }}>${Number(SERVICE_FEE).toFixed(2)}</span>
+            </div>
+            {isCouponApplied && discountAmountCents > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, color: '#15803D' }}>Discount ({couponCode})</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#15803D' }}>−${(discountAmountCents / 100).toFixed(2)}</span>
+              </div>
+            )}
+            <div style={{ height: 1, background: C.border, margin: '4px 0' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: C.dark }}>Total</span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: C.primary }}>${(finalTotalCents / 100).toFixed(2)}</span>
+            </div>
+          </div>
+
+          {/* Meta chips */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
+            <span style={{
+              fontSize: 12, fontWeight: 600,
+              background: 'rgba(230,57,70,0.08)', color: C.primary,
+              padding: '4px 10px', borderRadius: 20,
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              {paymentMethod === 'cash' ? <Banknote size={13} /> : <CreditCard size={13} />}
+              {paymentMethod === 'cash' ? 'Cash' : 'Online'}
+            </span>
+            <span style={{
+              fontSize: 12, fontWeight: 600,
+              background: 'rgba(230,57,70,0.08)', color: C.primary,
+              padding: '4px 10px', borderRadius: 20,
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              {orderType === 'dine-in' ? <Utensils size={13} /> : <Package size={13} />}
+              {orderType === 'dine-in' ? 'Dine In' : 'Parcel'}
+            </span>
+            {orderType === 'dine-in' && selectedTableId && (() => {
+              const t = tables.find((tb) => tb.id === selectedTableId);
+              return t ? (
+                <span style={{
+                  fontSize: 12, fontWeight: 600,
+                  background: 'rgba(230,57,70,0.08)', color: C.primary,
+                  padding: '4px 10px', borderRadius: 20,
+                }}>
+                  Table {t.tableNumber}
+                </span>
+              ) : null;
+            })()}
+          </div>
+
+          {/* Additional Notes */}
+          <div style={{ marginBottom: 18 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: C.dark, marginBottom: 8 }}>Additional Notes</p>
+            <textarea
+              value={additionalNotes}
+              onChange={(e) => setAdditionalNotes(e.target.value)}
+              placeholder="Any special instructions or requests…"
+              rows={3}
+              style={{
+                width: '100%', padding: '10px 13px',
+                border: `1.5px solid ${C.border}`, borderRadius: 10,
+                fontSize: 13, color: C.dark, background: '#fff',
+                outline: 'none', resize: 'vertical',
+                fontFamily: 'inherit', boxSizing: 'border-box',
+                transition: 'border-color 0.2s',
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = C.primary)}
+              onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
+            />
+          </div>
+
+          </div>
+
+          {/* ── Sticky footer ── */}
+          <div style={{ padding: '16px 24px 24px', flexShrink: 0, borderTop: `1px solid ${C.border}` }}>
+            {orderPlaceError && (
+              <div style={{
+                background: '#FEF2F2', border: '1px solid #FECACA',
+                borderRadius: 9, padding: '9px 13px', marginBottom: 12,
+                fontSize: 13, color: '#DC2626',
+                display: 'flex', alignItems: 'center', gap: 7,
+              }}>
+                <span style={{ fontSize: 16 }}>⚠</span> {orderPlaceError}
+              </div>
+            )}
+            <button
+            onClick={async () => {
+              setOrderPlaceError('');
+              setIsPlacingOrder(true);
+              try {
+                const payload = buildOrderPayload({
+                  restaurantId,
+                  orderType:     orderType === 'dine-in' ? 'DINE_IN' : 'TAKEAWAY',
+                  paymentMethod: paymentMethod === 'cash' ? 'CASH' : 'ONLINE_PAYMENT',
+                  totalPrice:    finalTotalCents,
+                  cartItems:     cart,
+                  ...(orderType === 'dine-in' && selectedTableId ? { tableId: selectedTableId } : {}),
+                  ...(isCouponApplied && couponId             ? { couponId }                  : {}),
+                  ...(additionalNotes.trim()                   ? { notes: additionalNotes.trim() } : {}),
+                });
+                console.log('[CartPage] Placing order with payload:', payload);
+                const res = await placeOrder(payload);
+                const data = res?.data ?? res;
+                const orderId = data?.data?.id ?? data?.data?.orderId ?? data?.id ?? data?.orderId ?? null;
+                clearCart();
+                setShowConfirmModal(false);
+                navigate('/order-confirmation', {
+                  state: {
+                    orderId,
+                    orderType:     orderType === 'dine-in' ? 'DINE_IN' : 'TAKEAWAY',
+                    paymentMethod: paymentMethod === 'cash' ? 'CASH' : 'ONLINE_PAYMENT',
+                    total:         finalTotalCents / 100,
+                  },
+                });
+              } catch (err) {
+                setOrderPlaceError(err?.message || 'Failed to place order. Please try again.');
+              } finally {
+                setIsPlacingOrder(false);
+              }
+            }}
+            style={{
+              width: '100%', padding: '13px',
+              background: C.primary, color: '#fff',
+              border: 'none', borderRadius: 11,
+              fontSize: 15, fontWeight: 700, cursor: isPlacingOrder ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: '0 4px 16px rgba(230,57,70,0.28)',
+              marginBottom: 10,
+              opacity: isPlacingOrder ? 0.75 : 1,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = C.primaryHover)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = C.primary)}
+          >
+            {isPlacingOrder
+              ? <><Loader2 size={16} style={{ animation: 'cp-spin 0.7s linear infinite' }} /> Placing Order…</>
+              : <>{paymentMethod === 'cash' ? 'Confirm Order' : 'Confirm & Pay'} <ArrowRight size={16} /></>}
+          </button>
+          <button
+            onClick={() => { if (!isPlacingOrder) { setShowConfirmModal(false); setOrderPlaceError(''); } }}
+            disabled={isPlacingOrder}
+            style={{
+              width: '100%', padding: '10px',
+              background: 'none', border: `1.5px solid ${C.border}`,
+              borderRadius: 11, fontSize: 13, fontWeight: 500,
+              color: C.muted, cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = C.primary;
+              e.currentTarget.style.color = C.primary;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = C.border;
+              e.currentTarget.style.color = C.muted;
+            }}
+          >
+            Back to Cart
+          </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
   );
 };
 
