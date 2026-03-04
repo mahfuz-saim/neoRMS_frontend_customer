@@ -28,7 +28,7 @@ const C = {
 };
 
 const TAX_RATE    = 0.08;  // 8 %
-const SERVICE_FEE = 1.99;
+const SERVICE_FEE = 2;
 
 const CartPage = () => {
   const { cart, removeFromCart, updateQuantity, clearCart, cartTotal } = useContext(CartContext);
@@ -55,7 +55,7 @@ const CartPage = () => {
 
   // ── Derived totals (all in cents, display converts /100) ──────
   const subtotal           = cartTotal;                                       // dollars (float)
-  const tax                = subtotal * TAX_RATE;                            // dollars (float)
+  const tax                = Math.round(subtotal * TAX_RATE);               // dollars (integer)
   // originalTotalCents: Math.ceil so fractions never short-change
   const originalTotalCents = Math.ceil((subtotal + tax + SERVICE_FEE) * 100); // integer cents
   // Trust backend finalAmount when coupon is applied; otherwise use original

@@ -24,8 +24,8 @@ const BASE_NAV_LINKS = [
   { to: '/',             label: 'Home' },
   { to: '/restaurants',  label: 'Restaurants' },
   { to: '/daily-menu',   label: 'Daily Menu' },
-  { to: '/order',        label: 'Order Food Online' },
-  { to: '/reservations', label: 'Dine In' },
+  // { to: '/order',        label: 'Order Food Online' },
+  // { to: '/reservations', label: 'Dine In' },
 ];
 
 const Header = () => {
@@ -65,8 +65,8 @@ const Header = () => {
         { to: `/restaurant/${restaurantId}`,       label: 'Home'              },
         { to: '/restaurants',                      label: 'Restaurants',       onClick: clearCurrentRestaurant },
         { to: `/restaurant/${restaurantId}/menu`,  label: 'Daily Menu'        },
-        { to: `/restaurant/${restaurantId}/menu`,  label: 'Order Food Online' },
-        { to: '/reservations',                     label: 'Dine In'           },
+        // { to: `/restaurant/${restaurantId}/menu`,  label: 'Order Food Online' },
+        // { to: '/reservations',                     label: 'Dine In'           },
         { to: `/restaurant/${restaurantId}/about`, label: 'About Us'          },
       ]
     : isRestaurantsPage
@@ -325,21 +325,21 @@ const Header = () => {
           <div className="flex items-center flex-shrink-0" style={{ gap: 10 }}>
 
             {/* Notifications — protected; ProtectedRoute handles unauthenticated access */}
-            <Link
+            {/* <Link
               to="/notifications"
               className="nb-icon-btn relative flex items-center justify-center rounded-full flex-shrink-0"
               style={{ width: 44, height: 44, backgroundColor: iconBg }}
               aria-label="Notifications"
-            >
-              <Bell size={20} color={iconColor} />
+            > */}
+              {/* <Bell size={20} color={iconColor} /> */}
               {/* static unread dot */}
-              <span style={{
+              {/* <span style={{
                 position: 'absolute', top: 4, right: 4,
                 width: 9, height: 9, borderRadius: '50%',
                 backgroundColor: '#EF4444',
                 boxShadow: '0 0 0 2px ' + (onHero ? 'transparent' : '#fff'),
               }} />
-            </Link>
+            </Link> */}
 
             {/* Cart — opens modal if not authenticated; navigates to /cart if authenticated */}
             <button
