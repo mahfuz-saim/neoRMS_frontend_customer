@@ -514,7 +514,7 @@ const RestaurantsPage = () => {
       `}</style>
 
       {/* ══ ZONE 1: Promo — soft blush ══ */}
-      <div style={{ background: '#FFF0EE', paddingTop: 28, paddingBottom: 18 }}>
+      {/* <div style={{ background: '#FFF0EE', paddingTop: 28, paddingBottom: 18 }}>
       <div style={{ maxWidth: 1140, margin: '0 auto', padding: '0 24px' }}>
         <div className="rp-promo-wrap">
         <div className="rp-promo-card" style={{
@@ -522,7 +522,6 @@ const RestaurantsPage = () => {
           display: 'flex', alignItems: 'center',
           justifyContent: 'space-between', gap: 20,
         }}>
-          {/* Left: label + heading + CTA */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{
               fontSize: 11, fontWeight: 700, letterSpacing: '1.2px',
@@ -550,7 +549,6 @@ const RestaurantsPage = () => {
               Sign Up Free
             </a>
           </div>
-          {/* Right: delivery icon */}
           <div style={{
             flexShrink: 0,
             width: 76, height: 76,
@@ -561,14 +559,15 @@ const RestaurantsPage = () => {
             <Truck size={36} color={C.primary} strokeWidth={1.7} />
           </div>
         </div>
-        </div>{/* end rp-promo-wrap */}
-      </div>{/* end inner container */}
-      </div>{/* end Zone 1 */}
+        </div>
+      </div>
+      </div> */}
+      {/* end Zone 1 */}
 
       {/* ══ ZONE 2: Cuisine — pure white ══ */}
       <div style={{ background: '#FFFFFF' }}>
       {/* ② Browse by Cuisine — sticky heading + icons */}
-      <div className="rp-sticky" style={{ marginTop: 20 }}>
+      <div className="rp-sticky" style={{ marginTop: 0 }}>
         <div style={{ borderBottom: `1px solid ${C.border}`, padding: '16px 0 12px' }}>
           <div style={{ maxWidth: 1140, margin: '0 auto', padding: '0 24px' }}>
 

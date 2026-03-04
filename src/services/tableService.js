@@ -17,5 +17,6 @@ export const getTablesByRestaurant = (restaurantId) =>
     .get(`/table/${restaurantId}`)
     .then((res) => {
       const payload = res?.data ?? res;
-      return Array.isArray(payload?.data) ? payload.data : [];
+      console.log('table', payload);
+      return Array.isArray(payload) ? payload : [];
     });

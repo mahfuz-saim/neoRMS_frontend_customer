@@ -14,6 +14,7 @@ import { CartContext } from '../context/CartContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import { validateCoupon, placeOrder, buildOrderPayload } from '../services/orderService';
 import { getTablesByRestaurant } from '../services/tableService';
+import { initPayment } from '../services/paymentService';
 
 /* ── Theme ── */
 const C = {
@@ -478,34 +479,26 @@ const CartPage = () => {
                   ) : tables.length === 0 ? (
                     <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>No tables available.</p>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                      {tables.map((t) => {
-                        const active = selectedTableId === t.id;
-                        return (
-                          <button
-                            key={t.id}
-                            onClick={() => setSelectedTableId(active ? null : t.id)}
-                            style={{
-                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                              padding: '9px 13px',
-                              border: `2px solid ${active ? C.primary : C.border}`,
-                              borderRadius: 10,
-                              background: active ? 'rgba(230,57,70,0.06)' : '#fff',
-                              cursor: 'pointer',
-                              transition: 'border-color 0.2s, background-color 0.2s',
-                              width: '100%',
-                            }}
-                          >
-                            <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? C.primary : C.dark }}>
-                              Table {t.tableNumber}
-                            </span>
-                            <span style={{ fontSize: 12, color: active ? C.primary : C.muted }}>
-                              Capacity: {t.capacity}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <select
+                      value={selectedTableId ?? ''}
+                      onChange={(e) => setSelectedTableId(e.target.value || null)}
+                      style={{
+                        width: '100%', padding: '10px 13px',
+                        border: `1.5px solid ${C.border}`, borderRadius: 10,
+                        fontSize: 13, color: C.dark, background: '#fff',
+                        outline: 'none', cursor: 'pointer',
+                        transition: 'border-color 0.2s',
+                      }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = C.primary)}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
+                    >
+                      <option value="">Select a table…</option>
+                      {tables.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          Table {t.tableNumber} — Capacity: {t.capacity}
+                        </option>
+                      ))}
+                    </select>
                   )}
                 </div>
               )}
@@ -780,6 +773,22 @@ const CartPage = () => {
                 const orderId = data?.data?.id ?? data?.data?.orderId ?? data?.id ?? data?.orderId ?? null;
                 clearCart();
                 setShowConfirmModal(false);
+
+                if (paymentMethod === 'online') {
+                  // Initiate online payment session
+                  const payRes = await initPayment({
+                    orderId,
+                    amount: finalTotalCents,
+                    restaurantId,
+                  });
+                  console.log ('payres', payRes);
+                  const paymentUrl = payRes.data.gatewayUrl ?? payRes?.paymentUrl ?? payRes?.data?.paymentUrl ?? payRes?.url ?? payRes?.data?.url ?? null;
+                  if (paymentUrl) {
+                    window.location.href = paymentUrl;
+                    return;
+                  }
+                }
+
                 navigate('/order-confirmation', {
                   state: {
                     orderId,

@@ -22,8 +22,7 @@ const C = {
 
 const BASE_NAV_LINKS = [
   { to: '/',             label: 'Home' },
-  { to: '/restaurants',  label: 'Restaurants' },
-  { to: '/daily-menu',   label: 'Daily Menu' },
+  { to: '/daily-menu',   label: 'Menu' },
   // { to: '/order',        label: 'Order Food Online' },
   // { to: '/reservations', label: 'Dine In' },
 ];
@@ -63,20 +62,16 @@ const Header = () => {
   const navLinks = restaurantId
     ? [
         { to: `/restaurant/${restaurantId}`,       label: 'Home'              },
-        { to: '/restaurants',                      label: 'Restaurants',       onClick: clearCurrentRestaurant },
-        { to: `/restaurant/${restaurantId}/menu`,  label: 'Daily Menu'        },
+        { to: `/restaurant/${restaurantId}/menu`,  label: 'Menu'        },
         // { to: `/restaurant/${restaurantId}/menu`,  label: 'Order Food Online' },
         // { to: '/reservations',                     label: 'Dine In'           },
         { to: `/restaurant/${restaurantId}/about`, label: 'About Us'          },
       ]
     : isRestaurantsPage
-      ? [
-          { to: '/restaurants', label: 'Restaurants' },
-        ]
+      ? []
     : isHome
       ? [
-          { to: '/',            label: 'Home'        },
-          { to: '/restaurants', label: 'Restaurants' },
+          { to: '/', label: 'Home' },
         ]
       : BASE_NAV_LINKS;
 
