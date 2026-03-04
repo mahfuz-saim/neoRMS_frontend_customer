@@ -59,12 +59,13 @@ const Header = () => {
      - On /                 → Home + Restaurants
      - Everywhere else      → standard BASE_NAV_LINKS
   */
+  const isAuthenticated = status === AUTH_STATUS.AUTHENTICATED;
+
   const navLinks = restaurantId
     ? [
         { to: `/restaurant/${restaurantId}`,       label: 'Home'              },
-        { to: `/restaurant/${restaurantId}/menu`,  label: 'Menu'        },
-        // { to: `/restaurant/${restaurantId}/menu`,  label: 'Order Food Online' },
-        // { to: '/reservations',                     label: 'Dine In'           },
+        { to: `/restaurant/${restaurantId}/menu`,  label: 'Menu'              },
+        ...(isAuthenticated ? [{ to: '/order', label: 'Past Orders' }] : []),
         { to: `/restaurant/${restaurantId}/about`, label: 'About Us'          },
       ]
     : isRestaurantsPage
@@ -336,7 +337,8 @@ const Header = () => {
               }} />
             </Link> */}
 
-            {/* Cart — opens modal if not authenticated; navigates to /cart if authenticated */}
+            {/* Cart — hidden on /restaurants; opens modal if not authenticated */}
+            {!isRestaurantsPage && (
             <button
               onClick={handleCartClick}
               className="nb-icon-btn relative flex items-center justify-center rounded-full flex-shrink-0"
@@ -357,6 +359,7 @@ const Header = () => {
                 </span>
               )}
             </button>
+            )}
 
             <div style={{ width: 6 }} className="hidden sm:block" />
 
@@ -396,13 +399,6 @@ const Header = () => {
 
                 {userMenuOpen && (
                   <div className="nb-user-menu">
-                    <Link
-                      to="/order"
-                      className="nb-user-item"
-                      onClick={() => setUserMenuOpen(false)}
-                    >
-                      <ShoppingCart size={15} /> My Orders
-                    </Link>
                     <button
                       className="nb-user-item danger"
                       onClick={() => { setUserMenuOpen(false); logout(); }}
@@ -436,8 +432,8 @@ const Header = () => {
               </button>
             )}
 
-            {/* Book A Table CTA — only shown when authenticated or on desktop */}
-            {status === AUTH_STATUS.AUTHENTICATED && (
+            {/* Book A Table CTA — hidden on /restaurants */}
+            {status === AUTH_STATUS.AUTHENTICATED && !isRestaurantsPage && (
               <Link
                 to="/reservations"
                 className={`hidden lg:flex items-center flex-shrink-0 ${onHero ? 'nb-cta-ghost' : 'nb-cta'}`}

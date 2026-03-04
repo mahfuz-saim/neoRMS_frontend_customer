@@ -388,25 +388,6 @@ const OrderCard = ({ order, navigate }) => {
               </div>
             )}
           </div>
-
-          {/* View full details link */}
-          {orderId && (
-            <button
-              onClick={() => navigate(`/order/${orderId}`)}
-              style={{
-                width: '100%', padding: '9px 0', borderRadius: 10,
-                background: 'transparent', color: C.primary,
-                border: `1.5px solid ${C.primary}`,
-                fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                transition: 'background-color 0.15s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#FEF2F2'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-            >
-              <ExternalLink size={13} /> View Full Details
-            </button>
-          )}
         </div>
       )}
     </div>
