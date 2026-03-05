@@ -165,8 +165,8 @@ const BannerCarousel = ({ restaurant, restaurantId }) => {
       `}</style>
 
       <section
-        className="relative overflow-hidden"
-        style={{ height: '100vh', minHeight: 560, marginTop: -80 }}
+        className="relative overflow-hidden h-screen"
+        style={{ minHeight: 560, marginTop: -80 }}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
@@ -222,12 +222,12 @@ const BannerCarousel = ({ restaurant, restaurantId }) => {
         {/* ── Hero content ── */}
         <div
           style={{ position: 'absolute', inset: 0, zIndex: 10 }}
-          className="flex items-center justify-center px-6"
+          className="flex items-center justify-center px-6 h-full"
         >
-          <div key={active} className="text-center w-full" style={{ maxWidth: 820 }}>
+          <div key={active} className="w-full" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
 
             {/* Badge */}
-            <div className="bc-badge flex justify-center mb-5">
+            <div className="bc-badge mb-5" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
               <span style={{
                 display: 'inline-block',
                 background: 'linear-gradient(135deg, #E63946 0%, #C0252E 100%)',
@@ -250,8 +250,10 @@ const BannerCarousel = ({ restaurant, restaurantId }) => {
               fontWeight: 800,
               lineHeight: 1.1,
               letterSpacing: '-1px',
-              marginBottom: 20,
+              marginBottom: 16,
               textTransform: 'uppercase',
+              textAlign: 'center',
+              width: '100%',
             }}>
               <span className="block" style={{ fontSize: 'clamp(2.2rem, 5.5vw, 3.8rem)' }}>
                 {restaurant?.name || 'Restaurant'}
@@ -271,30 +273,18 @@ const BannerCarousel = ({ restaurant, restaurantId }) => {
             </h1>
 
             {/* Tagline */}
-            {restaurant?.tagline && (
-              <p className="bc-tagline mx-auto" style={{
-                color: 'rgba(255,255,255,0.82)',
-                fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
-                fontWeight: 400,
-                lineHeight: 1.7,
-                maxWidth: 560,
-                marginBottom: 36,
-              }}>
-                {restaurant.tagline}
-              </p>
-            )}
-            {!restaurant?.tagline && (
-              <p className="bc-tagline mx-auto" style={{
-                color: 'rgba(255,255,255,0.82)',
-                fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
-                fontWeight: 400,
-                lineHeight: 1.7,
-                maxWidth: 560,
-                marginBottom: 36,
-              }}>
-                Crafted with passion. Served with love. Every plate tells a story worth savoring.
-              </p>
-            )}
+            <p className="bc-tagline" style={{
+              color: 'rgba(255,255,255,0.82)',
+              fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
+              fontWeight: 400,
+              lineHeight: 1.7,
+              maxWidth: 560,
+              width: '100%',
+              textAlign: 'center',
+              margin: '0 auto 36px auto',
+            }}>
+              {restaurant?.tagline || 'Crafted with passion. Served with love. Every plate tells a story worth savoring.'}
+            </p>
 
             {/* CTA Buttons */}
             <div className="bc-cta flex flex-wrap items-center justify-center" style={{ gap: 16 }}>

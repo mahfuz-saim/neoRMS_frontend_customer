@@ -171,8 +171,8 @@ const HeroSection = () => {
       `}</style>
 
       <section
-        className="relative overflow-hidden"
-        style={{ height: '100vh', minHeight: 560 }}
+        className="relative overflow-hidden h-screen"
+        style={{ minHeight: 560 }}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
@@ -228,9 +228,9 @@ const HeroSection = () => {
         {/* ── Hero content ── */}
         <div
           style={{ position: 'absolute', inset: 0, zIndex: 10 }}
-          className="flex items-center justify-center px-6"
+          className="flex items-center justify-center px-6 h-full"
         >
-          <div key={active} className="text-center w-full" style={{ maxWidth: 820 }}>
+          <div key={active} className="w-full" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
 
             {/* Badge ribbon */}
             <div className="hero-badge flex justify-center mb-5">
@@ -257,8 +257,10 @@ const HeroSection = () => {
               fontWeight: 800,
               lineHeight: 1.1,
               letterSpacing: '-1px',
-              marginBottom: 20,
+              marginBottom: 16,
               textTransform: 'uppercase',
+              textAlign: 'center',
+              width: '100%',
             }}>
               <span className="block" style={{ fontSize: 'clamp(2.6rem, 6vw, 4.2rem)' }}>
                 {slide.heading[0]}
@@ -272,13 +274,15 @@ const HeroSection = () => {
             </h1>
 
             {/* Tagline */}
-            <p className="hero-tagline mx-auto" style={{
+            <p className="hero-tagline" style={{
               color: 'rgba(255,255,255,0.82)',
               fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
               fontWeight: 400,
               lineHeight: 1.7,
               maxWidth: 560,
-              marginBottom: 36,
+              width: '100%',
+              textAlign: 'center',
+              margin: '0 auto 36px auto',
             }}>
               {slide.tagline}
             </p>
